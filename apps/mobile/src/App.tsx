@@ -574,7 +574,7 @@ export default function MobileApp() {
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Alex Chen"
+              placeholder="Enter your name"
               placeholderTextColor="#666666"
               value={editName}
               onChangeText={setEditName}
@@ -583,7 +583,7 @@ export default function MobileApp() {
             <Text style={styles.inputLabel}>Role / Focus Area</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Technical Lead"
+              placeholder="Enter role (e.g. Lead, Engineer)"
               placeholderTextColor="#666666"
               value={editRole}
               onChangeText={setEditRole}
@@ -592,7 +592,7 @@ export default function MobileApp() {
             <Text style={styles.inputLabel}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. alex@kavexa.io"
+              placeholder="name@example.com"
               placeholderTextColor="#666666"
               value={editEmail}
               onChangeText={setEditEmail}

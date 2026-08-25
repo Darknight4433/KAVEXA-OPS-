@@ -503,7 +503,7 @@ export const TasksHub: React.FC = () => {
               <span>•</span>
               <span>📅 Due: {task.deadline}</span>
               <span>•</span>
-              <span>👤 {task.assignedMemberId === 'member_vaish' ? 'Vaish' : 'Alex'}</span>
+              <span>👤 {members.find((m) => m.id === task.assignedMemberId)?.name || 'Unassigned'}</span>
               {task.linkedDocumentIds && task.linkedDocumentIds.length > 0 && (
                 <span style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                   <FileText size={11} />

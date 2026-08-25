@@ -193,11 +193,11 @@ export const CommandCenter: React.FC = () => {
             </span>
             <Users size={16} style={{ color: 'var(--accent-emerald)' }} />
           </div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)', marginTop: '0.3rem' }}>
-            {teamSync.bestCollaborationWindow?.startTime} - {teamSync.bestCollaborationWindow?.endTime}
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)', marginTop: '0.3rem' }}>
+            {teamSync.bestCollaborationWindow ? `${teamSync.bestCollaborationWindow.startTime} - ${teamSync.bestCollaborationWindow.endTime}` : 'Solo Mode'}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            {teamSync.bestCollaborationWindow?.label || 'Today'}
+            {teamSync.bestCollaborationWindow?.label || 'No team members added'}
           </div>
         </div>
       </div>
@@ -321,7 +321,7 @@ export const CommandCenter: React.FC = () => {
               >
                 <div>
                   <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#fca5a5' }}>{t.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Overdue deadline • Assigned to {t.assignedMemberId === 'member_vaish' ? 'Vaish' : 'Alex'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Overdue deadline • Assigned to {members.find((m) => m.id === t.assignedMemberId)?.name || 'Team'}</div>
                 </div>
                 <span className="priority-score-badge score-urgent" style={{ fontSize: '0.7rem' }}>
                   OVERDUE

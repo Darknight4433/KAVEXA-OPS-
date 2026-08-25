@@ -39,6 +39,7 @@ export const ProjectKnowledgeHub: React.FC<{ project: Project; onBack: () => voi
     resources,
     files,
     ideas,
+    members,
     activityLogs,
     toggleTaskComplete,
     togglePinResource,
@@ -407,7 +408,7 @@ export const ProjectKnowledgeHub: React.FC<{ project: Project; onBack: () => voi
                       <span>•</span>
                       <span>Duration: {formatDuration(t.estimatedDuration)}</span>
                       <span>•</span>
-                      <span>Assigned: {t.assignedMemberId === 'member_vaish' ? 'Vaish' : 'Alex'}</span>
+                      <span>Assigned: {members.find((m) => m.id === t.assignedMemberId)?.name || 'Team'}</span>
                       {t.linkedDocumentIds && t.linkedDocumentIds.length > 0 && (
                         <span style={{ color: 'var(--accent-primary)' }}>📄 {t.linkedDocumentIds.length} doc linked</span>
                       )}

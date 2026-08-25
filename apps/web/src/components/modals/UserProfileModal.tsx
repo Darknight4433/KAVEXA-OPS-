@@ -83,14 +83,14 @@ export const UserProfileModal: React.FC<{
 }> = ({ isOpen, onClose, isFirstLogin = false }) => {
   const { currentMember, updateMember, triggerConfetti } = useApp();
 
-  const [name, setName] = useState(currentMember?.name || '');
-  const [role, setRole] = useState(currentMember?.role || 'Founder & Technical Lead');
-  const [focusDomain, setFocusDomain] = useState(currentMember?.focusDomain || 'Robotics, AI Hardware & Web Systems');
-  const [university, setUniversity] = useState(currentMember?.university || 'Computer Science & Engineering');
-  const [bio, setBio] = useState(currentMember?.bio || 'Building revolutionary autonomous systems at KAVEXA.');
+  const [name, setName] = useState(currentMember?.name === 'Not Signed In' ? '' : (currentMember?.name || ''));
+  const [role, setRole] = useState(currentMember?.role === 'Sign in to access workspace' ? '' : (currentMember?.role || ''));
+  const [focusDomain, setFocusDomain] = useState(currentMember?.focusDomain || '');
+  const [university, setUniversity] = useState(currentMember?.university || '');
+  const [bio, setBio] = useState(currentMember?.bio || '');
   const [selectedTheme, setSelectedTheme] = useState(currentMember?.themePreference || 'midnight');
   const [avatarUrl, setAvatarUrl] = useState(currentMember?.avatarUrl || '');
-  const [skillsStr, setSkillsStr] = useState(currentMember?.skills?.join(', ') || 'Robotics, React, Firebase, AI Hardware, CAD');
+  const [skillsStr, setSkillsStr] = useState(currentMember?.skills?.join(', ') || '');
 
   if (!isOpen) return null;
 
@@ -114,13 +114,13 @@ export const UserProfileModal: React.FC<{
 
     updateMember(currentMember.id, {
       name: name.trim(),
-      role: role.trim(),
+      role: role.trim() || 'Founder',
       focusDomain: focusDomain.trim(),
       university: university.trim(),
       bio: bio.trim(),
       themePreference: selectedTheme,
       avatarUrl: avatarUrl || currentMember.avatarUrl,
-      skills: skillsArray.length > 0 ? skillsArray : ['Operations']
+      skills: skillsArray
     });
 
     handleThemeSelect(selectedTheme);
@@ -129,11 +129,21 @@ export const UserProfileModal: React.FC<{
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 9999 }}>
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '640px', width: '92vw', maxHeight: '90vh', overflowY: 'auto' }}
+        style={{
+          maxWidth: '600px',
+          width: '94vw',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          margin: 'auto',
+          backgroundColor: '#0A0A0A',
+          border: '1px solid #242424',
+          borderRadius: '16px',
+          padding: '1.5rem'
+        }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -218,7 +228,7 @@ export const UserProfileModal: React.FC<{
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="form-input"
-                placeholder="e.g. Vaishnavi L."
+                placeholder="Enter full name"
                 required
               />
             </div>

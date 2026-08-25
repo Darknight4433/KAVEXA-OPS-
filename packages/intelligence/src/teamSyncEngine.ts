@@ -25,8 +25,22 @@ export function calculateTeamSync(
   events: ScheduleEvent[],
   targetDate: string = new Date().toISOString().split('T')[0]
 ): TeamSyncSummary {
-  const m1 = members[0] || { id: 'm1', name: 'Vaish', weeklyWorkloadHours: 14 };
-  const m2 = members[1] || { id: 'm2', name: 'Alex M.', weeklyWorkloadHours: 12 };
+  if (!members || members.length < 2) {
+    const single = members?.[0];
+    return {
+      bestCollaborationWindow: null,
+      upcomingSharedWindows: [],
+      workloadBalanceRatio: {
+        member1: { name: single?.name || 'You', hours: single?.weeklyWorkloadHours || 0, percentage: 100 },
+        member2: { name: 'No Team Member', hours: 0, percentage: 0 },
+        isBalanced: true,
+        recommendation: 'Solo operational mode. Invite team members in Team & Sync to unlock collaboration intelligence.'
+      }
+    };
+  }
+
+  const m1 = members[0];
+  const m2 = members[1];
 
   // Sample computed collaboration windows based on free time blocks
   const upcomingSharedWindows: CollaborationWindow[] = [

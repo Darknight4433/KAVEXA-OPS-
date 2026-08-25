@@ -596,28 +596,30 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 7, 13, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  padding: 1.5rem;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
   animation: fadeIn 0.15s ease-out;
 }
 
 .modal-content {
-  background: #0f172a;
-  border: 1px solid var(--border-medium);
+  background: #0A0A0A;
+  border: 1px solid #242424;
   border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 680px;
-  max-height: 90vh;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), var(--shadow-glow);
-  padding: 1.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
+  padding: 1.5rem;
   position: relative;
+  margin: auto;
 }
 
 .drawer-overlay {

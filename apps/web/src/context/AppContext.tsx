@@ -283,36 +283,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
-  const currentMember =
-    members.find((m) => m.id === currentMemberId) ||
-    members[0] ||
-    (authUser
-      ? {
-          id: authUser.uid,
-          name: authUser.displayName || authUser.email?.split('@')[0] || 'Authenticated User',
-          role: 'Not configured',
-          email: authUser.email || '',
-          avatarUrl: authUser.photoURL || '/app-icon.png',
-          availability: 'Available',
-          weeklyWorkloadHours: 0,
-          assignedTasksCount: 0,
-          completedTasksCount: 0,
-          skills: [],
-          todayFreeSlots: []
-        }
-      : {
-          id: 'unauthenticated_user',
-          name: 'Profile not configured',
-          role: 'Role not configured',
-          email: 'Not signed in',
-          avatarUrl: '/app-icon.png',
-          availability: 'Offline',
-          weeklyWorkloadHours: 0,
-          assignedTasksCount: 0,
-          completedTasksCount: 0,
-          skills: [],
-          todayFreeSlots: []
-        });
+  const currentMember: TeamMember = authUser
+    ? {
+        id: authUser.uid,
+        name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
+        role: members.find((m) => m.id === authUser.uid)?.role || 'Founder',
+        email: authUser.email || '',
+        avatarUrl: authUser.photoURL || '/app-icon.png',
+        availability: members.find((m) => m.id === authUser.uid)?.availability || 'Available',
+        weeklyWorkloadHours: 0,
+        assignedTasksCount: 0,
+        completedTasksCount: 0,
+        skills: members.find((m) => m.id === authUser.uid)?.skills || [],
+        todayFreeSlots: []
+      }
+    : (members.find((m) => m.id === currentMemberId) || {
+        id: 'guest',
+        name: 'Not Signed In',
+        role: 'Sign in to access workspace',
+        email: '',
+        avatarUrl: '/app-icon.png',
+        availability: 'Offline',
+        weeklyWorkloadHours: 0,
+        assignedTasksCount: 0,
+        completedTasksCount: 0,
+        skills: [],
+        todayFreeSlots: []
+      });
 
   return (
     <AppContext.Provider

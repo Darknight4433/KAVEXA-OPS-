@@ -374,7 +374,7 @@ export const TeamHub: React.FC = () => {
                 <label className="form-label">Full Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. Alex Rivera"
+                  placeholder="Enter full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="form-input"
@@ -387,7 +387,7 @@ export const TeamHub: React.FC = () => {
                   <label className="form-label">Role</label>
                   <input
                     type="text"
-                    placeholder="e.g. Co-Founder & Product Lead"
+                    placeholder="Enter role (e.g. Engineer, Designer)"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     className="form-input"
@@ -399,7 +399,7 @@ export const TeamHub: React.FC = () => {
                   <label className="form-label">Email</label>
                   <input
                     type="email"
-                    placeholder="alex@kavexa.io"
+                    placeholder="member@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="form-input"
