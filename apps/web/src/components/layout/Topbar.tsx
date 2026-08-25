@@ -126,11 +126,11 @@ export const Topbar: React.FC = () => {
           <span>Focus HUD</span>
         </button>
 
-        {/* VS Code & Developer Coding Time Tracker Button */}
+        {/* Universal IDE & Developer Coding Time Tracker Button */}
         <button
           onClick={() => setIsVSCodeTrackerOpen(true)}
           className="btn btn-secondary"
-          title="VS Code & Developer Focus Engine"
+          title="Universal IDE & Developer Focus Engine"
           style={{
             fontSize: '0.8rem',
             padding: '0.45rem 0.75rem',
@@ -142,7 +142,7 @@ export const Topbar: React.FC = () => {
           }}
         >
           <Code size={15} style={{ color: 'var(--accent-cyan)' }} />
-          <span>VS Code</span>
+          <span>IDE Tracker</span>
         </button>
 
 

@@ -277,6 +277,7 @@ export interface TeamMember {
   currentProjectId?: string;
   totalHoursSpent?: number;
   activeCodingHoursToday?: number;
+  activeIde?: string;
 }
 
 export type EventType = 'School' | 'Study' | 'KAVEXA Work' | 'Meeting' | 'Deadline' | 'Personal';

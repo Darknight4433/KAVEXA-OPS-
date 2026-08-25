@@ -282,7 +282,7 @@ export const TeamHub: React.FC = () => {
                         🚀 Active Project Focus
                       </div>
                       <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        ● In VS Code
+                        ● In {member.activeIde || 'Visual Studio Code'}
                       </span>
                     </div>
 
