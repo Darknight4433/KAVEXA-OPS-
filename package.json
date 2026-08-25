@@ -5,13 +5,18 @@
   "description": "KAVEXA Operations & Productivity System (KAVEXA OPS)",
   "main": "electron/main.js",
   "author": "KAVEXA Team <team@kavexa.io>",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "server"
+  ],
   "scripts": {
-    "dev": "npm --workspace=apps/web run dev",
-    "build": "npm --workspace=apps/web run build",
+    "dev": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
     "desktop": "electron .",
     "desktop:build": "npm run build --prefix apps/web && electron-builder",
-    "server": "npm --workspace=server run dev",
-    "mobile": "npm --workspace=apps/mobile start"
+    "server": "npm run dev --prefix server",
+    "mobile": "npm start --prefix apps/mobile"
   },
   "build": {
     "appId": "com.kavexa.ops",
