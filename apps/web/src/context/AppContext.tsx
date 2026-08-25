@@ -136,6 +136,8 @@ interface AppContextType {
   logoutGoogle: () => Promise<void>;
   isUserProfileModalOpen: boolean;
   setIsUserProfileModalOpen: (open: boolean) => void;
+  isVSCodeTrackerOpen: boolean;
+  setIsVSCodeTrackerOpen: (open: boolean) => void;
   updateMember: (memberId: string, updates: Partial<TeamMember>) => TeamMember;
   createMember: (member: Partial<TeamMember>) => TeamMember;
   deleteMember: (memberId: string) => void;
@@ -209,6 +211,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
+  const [isVSCodeTrackerOpen, setIsVSCodeTrackerOpen] = useState<boolean>(false);
 
   const [authUser, setAuthUser] = useState<any>(null);
 
@@ -409,6 +412,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logoutGoogle,
         isUserProfileModalOpen,
         setIsUserProfileModalOpen,
+        isVSCodeTrackerOpen,
+        setIsVSCodeTrackerOpen,
         updateMember: (memberId, updates) => workspaceFirestore.updateMember(memberId, updates),
         createMember: (member) => workspaceFirestore.createMember(member),
         deleteMember: (memberId) => workspaceFirestore.deleteMember(memberId),

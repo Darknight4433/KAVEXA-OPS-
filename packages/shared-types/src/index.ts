@@ -274,6 +274,9 @@ export interface TeamMember {
   bio?: string;
   focusDomain?: string;
   university?: string;
+  currentProjectId?: string;
+  totalHoursSpent?: number;
+  activeCodingHoursToday?: number;
 }
 
 export type EventType = 'School' | 'Study' | 'KAVEXA Work' | 'Meeting' | 'Deadline' | 'Personal';

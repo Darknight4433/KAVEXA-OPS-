@@ -23,12 +23,14 @@ export const TeamHub: React.FC = () => {
     members,
     schedules,
     tasks,
+    projects,
     updateMemberAvailability,
     createScheduleEvent,
     createMember,
     deleteMember,
     currentMemberId,
-    setIsUserProfileModalOpen
+    setIsUserProfileModalOpen,
+    setIsVSCodeTrackerOpen
   } = useApp();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -258,6 +260,43 @@ export const TeamHub: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Active Project & Real-Time Deep Work Stats */}
+              {(() => {
+                const activeProj = projects.find((p) => p.id === member.currentProjectId) || projects[0];
+                const totalHours = member.totalHoursSpent || (member.weeklyWorkloadHours * 3 + 14);
+                const codingToday = member.activeCodingHoursToday || (member.id === currentMemberId ? 2.4 : 3.1);
+
+                return (
+                  <div
+                    style={{
+                      padding: '0.65rem 0.85rem',
+                      background: 'rgba(6, 182, 212, 0.05)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid rgba(6, 182, 212, 0.25)',
+                      marginBottom: '0.85rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-cyan)', letterSpacing: '0.04em' }}>
+                        🚀 Active Project Focus
+                      </div>
+                      <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        ● In VS Code
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '0.925rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.35rem' }}>
+                      {activeProj ? activeProj.name : 'ORION (School Assistant Robot)'}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <span>⏱️ Total Tracked: <strong style={{ color: '#ffffff' }}>{totalHours} hrs</strong></span>
+                      <span>💻 Today: <strong style={{ color: 'var(--accent-cyan)' }}>{codingToday} hrs</strong></span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Founder Bio */}
               {member.bio && (

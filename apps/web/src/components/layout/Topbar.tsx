@@ -15,10 +15,12 @@ import {
   Lightbulb,
   Palette,
   Sliders,
+  Code,
   X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { UserProfileModal } from '../modals/UserProfileModal';
+import { VSCodeTrackerModal } from '../modules/Analytics/VSCodeTrackerModal';
 
 export const Topbar: React.FC = () => {
   const {
@@ -42,7 +44,9 @@ export const Topbar: React.FC = () => {
     loginWithGoogle,
     logoutGoogle,
     isUserProfileModalOpen,
-    setIsUserProfileModalOpen
+    setIsUserProfileModalOpen,
+    isVSCodeTrackerOpen,
+    setIsVSCodeTrackerOpen
   } = useApp();
 
   const [timeStr, setTimeStr] = useState<string>('');
@@ -120,6 +124,25 @@ export const Topbar: React.FC = () => {
         >
           <Timer size={15} />
           <span>Focus HUD</span>
+        </button>
+
+        {/* VS Code & Developer Coding Time Tracker Button */}
+        <button
+          onClick={() => setIsVSCodeTrackerOpen(true)}
+          className="btn btn-secondary"
+          title="VS Code & Developer Focus Engine"
+          style={{
+            fontSize: '0.8rem',
+            padding: '0.45rem 0.75rem',
+            border: '1px solid rgba(6, 182, 212, 0.35)',
+            background: 'rgba(6, 182, 212, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}
+        >
+          <Code size={15} style={{ color: 'var(--accent-cyan)' }} />
+          <span>VS Code</span>
         </button>
 
 
@@ -437,6 +460,11 @@ export const Topbar: React.FC = () => {
       <UserProfileModal
         isOpen={isUserProfileModalOpen}
         onClose={() => setIsUserProfileModalOpen(false)}
+      />
+
+      <VSCodeTrackerModal
+        isOpen={isVSCodeTrackerOpen}
+        onClose={() => setIsVSCodeTrackerOpen(false)}
       />
     </header>
   );
