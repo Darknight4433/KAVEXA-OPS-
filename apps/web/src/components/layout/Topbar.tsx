@@ -308,7 +308,7 @@ export const Topbar: React.FC = () => {
             className="user-switcher"
           >
             <img
-              src={currentMember.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+              src={currentMember.avatarUrl || '/app-icon.png'}
               alt={currentMember.name}
               className="user-avatar-small"
             />

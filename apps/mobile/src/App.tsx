@@ -16,7 +16,7 @@ interface MobileTask {
   id: string;
   title: string;
   category: 'KAVEXA Work' | 'Study' | 'Personal';
-  priority: 'Critical' | 'High' | 'Medium';
+  priority: 'Critical' | 'High' | 'Medium' | 'Low';
   completed: boolean;
   project?: string;
   dueDate?: string;
@@ -48,16 +48,6 @@ interface MobileStudyTask {
   completed: boolean;
 }
 
-interface MobileMember {
-  id: string;
-  name: string;
-  role: string;
-  availability: 'Available' | 'Busy' | 'Studying' | 'Offline';
-  activeIde: string;
-  activeProject: string;
-  hoursSpent: number;
-}
-
 export default function MobileApp() {
   const [activeTab, setActiveTab] = useState<'today' | 'tasks' | 'projects' | 'profile'>('today');
 
@@ -70,109 +60,33 @@ export default function MobileApp() {
   const [activeProjectTab, setActiveProjectTab] = useState<'overview' | 'tasks' | 'files'>('overview');
   const [activeFilePreview, setActiveFilePreview] = useState<MobileFile | null>(null);
 
-  // Active Founder Persona
+  // Authenticated Founder Persona (Starts purely data-driven, NO hardcoded fake people)
   const [currentMember, setCurrentMember] = useState({
-    name: 'Harish R',
-    email: 'harish@kavexa.io',
-    role: 'Founder & Technical Lead',
-    domain: 'Autonomous Systems & Robotics',
-    university: 'B.Tech Robotics & Automation',
-    bio: 'Pioneering intelligent educational robotics and autonomous hardware.',
-    availability: 'Available' as 'Available' | 'Busy' | 'Studying' | 'Offline'
+    name: 'Profile not configured',
+    email: 'Not signed in',
+    role: 'Role not configured',
+    domain: 'Not set',
+    university: 'Not set',
+    bio: 'No bio provided yet.',
+    availability: 'Available' as 'Available' | 'Busy' | 'Studying' | 'Offline',
+    isLoggedIn: false
   });
 
-  // Projects
-  const [projects, setProjects] = useState<MobileProject[]>([
-    {
-      id: 'proj-1',
-      name: 'ORION (School Assistant Robot)',
-      description: 'Autonomous mechanical and AI assistant for educational administration.',
-      progress: 68,
-      status: 'Active',
-      health: 'Healthy'
-    },
-    {
-      id: 'proj-2',
-      name: 'KAVEXA OPS Core',
-      description: 'Operations, cloud synchronization, and developer telemetry architecture.',
-      progress: 84,
-      status: 'Active',
-      health: 'Healthy'
-    }
-  ]);
-
-  // Tasks
-  const [tasks, setTasks] = useState<MobileTask[]>([
-    {
-      id: 't-1',
-      title: 'Finalize ORION Mechanical Chassis 3D CAD',
-      category: 'KAVEXA Work',
-      priority: 'Critical',
-      completed: false,
-      project: 'ORION (School Assistant Robot)',
-      dueDate: 'Today at 6:00 PM'
-    },
-    {
-      id: 't-2',
-      title: 'Calibrate LIDAR Navigation & Obstacle Avoidance',
-      category: 'KAVEXA Work',
-      priority: 'High',
-      completed: false,
-      project: 'ORION (School Assistant Robot)',
-      dueDate: 'Tomorrow'
-    },
-    {
-      id: 't-3',
-      title: 'Operating Systems Kernel Multi-threading HW',
-      category: 'Study',
-      priority: 'High',
-      completed: false,
-      dueDate: 'In 2 days'
-    }
-  ]);
-
-  // Files
-  const [files, setFiles] = useState<MobileFile[]>([
-    {
-      id: 'f-1',
-      fileName: 'School_Principal_Assistant_Robot_Mechanical_Proposal.pdf',
-      fileType: 'PDF',
-      uploadedBy: 'Harish R',
-      size: '2.4 MB',
-      projectId: 'proj-1'
-    },
-    {
-      id: 'f-2',
-      fileName: 'ORION_Chassis_Exploded_View_v3.png',
-      fileType: 'Image',
-      uploadedBy: 'Harish R',
-      size: '1.8 MB',
-      projectId: 'proj-1'
-    }
-  ]);
-
-  // Study
-  const [studyTasks, setStudyTasks] = useState<MobileStudyTask[]>([
-    {
-      id: 'st-1',
-      title: 'OS Virtual Memory & Paging Problem Set',
-      subject: 'Operating Systems',
-      dueDate: 'Tomorrow at 11:59 PM',
-      completed: false
-    },
-    {
-      id: 'st-2',
-      title: 'Robotics Kinematics Jacobian Matrix Lab',
-      subject: 'Robotics & Control',
-      dueDate: 'In 3 days',
-      completed: false
-    }
-  ]);
+  // Pure data-driven collections (Zero fake seed data)
+  const [projects, setProjects] = useState<MobileProject[]>([]);
+  const [tasks, setTasks] = useState<MobileTask[]>([]);
+  const [files, setFiles] = useState<MobileFile[]>([]);
+  const [studyTasks, setStudyTasks] = useState<MobileStudyTask[]>([]);
 
   // Quick Add State
-  const [quickType, setQuickType] = useState<'task' | 'file' | 'study'>('task');
+  const [quickType, setQuickType] = useState<'task' | 'file' | 'study' | 'project'>('task');
   const [quickTitle, setQuickTitle] = useState('');
-  const [quickProject, setQuickProject] = useState('proj-1');
+  const [quickProject, setQuickProject] = useState('');
+
+  // Profile Edit State
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editEmail, setEditEmail] = useState('');
 
   const focusTask = tasks.find((t) => !t.completed);
   const nextTasks = tasks.filter((t) => !t.completed && t.id !== focusTask?.id).slice(0, 3);
@@ -191,9 +105,19 @@ export default function MobileApp() {
         category: 'KAVEXA Work',
         priority: 'High',
         completed: false,
-        project: projects.find((p) => p.id === quickProject)?.name
+        project: projects.find((p) => p.id === quickProject)?.name || 'General'
       };
       setTasks([newTask, ...tasks]);
+    } else if (quickType === 'project') {
+      const newProj: MobileProject = {
+        id: 'p_' + Date.now(),
+        name: quickTitle.trim(),
+        description: 'New operational project.',
+        progress: 0,
+        status: 'Active',
+        health: 'Healthy'
+      };
+      setProjects([newProj, ...projects]);
     } else if (quickType === 'file') {
       const newFile: MobileFile = {
         id: 'f_' + Date.now(),
@@ -201,15 +125,15 @@ export default function MobileApp() {
         fileType: quickTitle.trim().endsWith('.pdf') ? 'PDF' : 'Image',
         uploadedBy: currentMember.name,
         size: '1.2 MB',
-        projectId: quickProject
+        projectId: quickProject || 'default_proj'
       };
       setFiles([newFile, ...files]);
     } else {
       const newStudy: MobileStudyTask = {
         id: 'st_' + Date.now(),
         title: quickTitle.trim(),
-        subject: 'Robotics Engineering',
-        dueDate: 'In 2 days',
+        subject: 'General Coursework',
+        dueDate: 'Not set',
         completed: false
       };
       setStudyTasks([newStudy, ...studyTasks]);
@@ -217,14 +141,27 @@ export default function MobileApp() {
 
     setQuickTitle('');
     setIsQuickAddOpen(false);
-    Alert.alert('⚡ Created & Synced', 'Updated across Cloud Firestore and Desktop App.');
+    Alert.alert('⚡ Created & Synced', 'Saved to your real operational database.');
+  };
+
+  const handleSaveProfile = () => {
+    if (!editName.trim()) return;
+    setCurrentMember({
+      ...currentMember,
+      name: editName.trim(),
+      role: editRole.trim() || 'Founder',
+      email: editEmail.trim() || 'user@kavexa.io',
+      isLoggedIn: true
+    });
+    setIsAuthModalOpen(false);
+    Alert.alert('✓ Profile Configured', 'Your identity has been saved.');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#050505" />
 
-      {/* Header */}
+      {/* Top Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={styles.brandBadge}>
@@ -235,20 +172,31 @@ export default function MobileApp() {
 
         <TouchableOpacity
           style={styles.authBadge}
-          onPress={() => setIsAuthModalOpen(true)}
+          onPress={() => {
+            setEditName(currentMember.name === 'Profile not configured' ? '' : currentMember.name);
+            setEditRole(currentMember.role === 'Role not configured' ? '' : currentMember.role);
+            setEditEmail(currentMember.email === 'Not signed in' ? '' : currentMember.email);
+            setIsAuthModalOpen(true);
+          }}
         >
-          <Text style={styles.authBadgeText}>✓ {currentMember.name}</Text>
+          <Text style={styles.authBadgeText}>
+            {currentMember.isLoggedIn ? `✓ ${currentMember.name}` : 'Sign In / Setup'}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content Area */}
+      {/* Main Content ScrollView */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* ================= 1. TODAY SCREEN ================= */}
         {activeTab === 'today' && (
           <View style={{ paddingBottom: 110 }}>
             <View style={{ marginBottom: 18 }}>
-              <Text style={styles.greetingTitle}>Good day, {currentMember.name.split(' ')[0]}</Text>
-              <Text style={styles.greetingSubtitle}>Here is your operational focus for today.</Text>
+              <Text style={styles.greetingTitle}>
+                {currentMember.isLoggedIn ? `Good day, ${currentMember.name.split(' ')[0]}` : 'Good day'}
+              </Text>
+              <Text style={styles.greetingSubtitle}>
+                {tasks.length > 0 ? 'Here is your operational focus for today.' : 'No tasks scheduled for today.'}
+              </Text>
             </View>
 
             {/* Today's Focus Card */}
@@ -266,7 +214,7 @@ export default function MobileApp() {
                 <View style={styles.focusCard}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                     <Text style={styles.priorityBadge}>{focusTask.priority} Priority</Text>
-                    <Text style={styles.focusMeta}>{focusTask.dueDate || 'Today'}</Text>
+                    <Text style={styles.focusMeta}>{focusTask.dueDate || 'No deadline'}</Text>
                   </View>
 
                   <Text style={styles.focusTitle}>{focusTask.title}</Text>
@@ -276,7 +224,7 @@ export default function MobileApp() {
                     style={styles.btnPrimary}
                     onPress={() => {
                       toggleTask(focusTask.id);
-                      Alert.alert('🎉 Deliverable Completed', 'Milestone recorded.');
+                      Alert.alert('🎉 Deliverable Completed', 'Milestone recorded in real database.');
                     }}
                   >
                     <Text style={styles.btnPrimaryText}>✓ Mark Focus Done</Text>
@@ -284,8 +232,17 @@ export default function MobileApp() {
                 </View>
               ) : (
                 <View style={styles.emptyCard}>
-                  <Text style={styles.emptyTitle}>All Priority Deliverables Done</Text>
-                  <Text style={styles.emptySub}>Nothing urgent requires attention right now.</Text>
+                  <Text style={styles.emptyTitle}>Nothing to prioritize yet</Text>
+                  <Text style={styles.emptySub}>Add a task to activate KAVEXA Intelligence.</Text>
+                  <TouchableOpacity
+                    style={[styles.btnSmall, { marginTop: 12 }]}
+                    onPress={() => {
+                      setQuickType('task');
+                      setIsQuickAddOpen(true);
+                    }}
+                  >
+                    <Text style={styles.btnSmallText}>+ Add Task</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -294,30 +251,38 @@ export default function MobileApp() {
             <View style={{ marginBottom: 20 }}>
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTagMuted}>IMPORTANT NEXT</Text>
-                <TouchableOpacity onPress={() => setActiveTab('tasks')}>
-                  <Text style={styles.linkText}>View All →</Text>
-                </TouchableOpacity>
+                {tasks.length > 0 && (
+                  <TouchableOpacity onPress={() => setActiveTab('tasks')}>
+                    <Text style={styles.linkText}>View All →</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
-              {nextTasks.map((t) => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={styles.taskRow}
-                  onPress={() => setSelectedTask(t)}
-                >
+              {nextTasks.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptySub}>No upcoming queued tasks.</Text>
+                </View>
+              ) : (
+                nextTasks.map((t) => (
                   <TouchableOpacity
-                    style={styles.miniCheckbox}
-                    onPress={() => toggleTask(t.id)}
+                    key={t.id}
+                    style={styles.taskRow}
+                    onPress={() => setSelectedTask(t)}
                   >
-                    {t.completed && <Text style={{ color: '#10B981', fontSize: 10 }}>✓</Text>}
+                    <TouchableOpacity
+                      style={styles.miniCheckbox}
+                      onPress={() => toggleTask(t.id)}
+                    >
+                      {t.completed && <Text style={{ color: '#10B981', fontSize: 10 }}>✓</Text>}
+                    </TouchableOpacity>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.taskRowTitle} numberOfLines={1}>{t.title}</Text>
+                      <Text style={styles.taskRowSub}>{t.project || t.category}</Text>
+                    </View>
+                    <Text style={styles.taskRowPri}>{t.priority}</Text>
                   </TouchableOpacity>
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.taskRowTitle} numberOfLines={1}>{t.title}</Text>
-                    <Text style={styles.taskRowSub}>{t.project || t.category}</Text>
-                  </View>
-                  <Text style={styles.taskRowPri}>{t.priority}</Text>
-                </TouchableOpacity>
-              ))}
+                ))
+              )}
             </View>
 
             {/* Today's Schedule */}
@@ -325,9 +290,8 @@ export default function MobileApp() {
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTagMuted}>TODAY'S SCHEDULE</Text>
               </View>
-              <View style={styles.scheduleRow}>
-                <Text style={styles.scheduleTime}>14:00 - 17:00</Text>
-                <Text style={styles.scheduleTitle}>Collaborative Deep Work Sprint</Text>
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptySub}>No upcoming schedule events for today.</Text>
               </View>
             </View>
           </View>
@@ -349,27 +313,43 @@ export default function MobileApp() {
               </TouchableOpacity>
             </View>
 
-            {tasks.map((task) => (
-              <TouchableOpacity
-                key={task.id}
-                style={styles.taskRow}
-                onPress={() => setSelectedTask(task)}
-              >
+            {tasks.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>NO TASKS FOUND</Text>
+                <Text style={styles.emptySub}>You're all clear. Add a task to start tracking.</Text>
                 <TouchableOpacity
-                  style={[styles.miniCheckbox, task.completed && styles.miniCheckboxDone]}
-                  onPress={() => toggleTask(task.id)}
+                  style={[styles.btnSmall, { marginTop: 12 }]}
+                  onPress={() => {
+                    setQuickType('task');
+                    setIsQuickAddOpen(true);
+                  }}
                 >
-                  {task.completed && <Text style={{ color: '#ffffff', fontSize: 10 }}>✓</Text>}
+                  <Text style={styles.btnSmallText}>+ Add Task</Text>
                 </TouchableOpacity>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={[styles.taskRowTitle, task.completed && styles.taskDoneText]}>
-                    {task.title}
-                  </Text>
-                  <Text style={styles.taskRowSub}>{task.project || task.category}</Text>
-                </View>
-                <Text style={styles.taskRowPri}>{task.priority}</Text>
-              </TouchableOpacity>
-            ))}
+              </View>
+            ) : (
+              tasks.map((task) => (
+                <TouchableOpacity
+                  key={task.id}
+                  style={styles.taskRow}
+                  onPress={() => setSelectedTask(task)}
+                >
+                  <TouchableOpacity
+                    style={[styles.miniCheckbox, task.completed && styles.miniCheckboxDone]}
+                    onPress={() => toggleTask(task.id)}
+                  >
+                    {task.completed && <Text style={{ color: '#ffffff', fontSize: 10 }}>✓</Text>}
+                  </TouchableOpacity>
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={[styles.taskRowTitle, task.completed && styles.taskDoneText]}>
+                      {task.title}
+                    </Text>
+                    <Text style={styles.taskRowSub}>{task.project || task.category}</Text>
+                  </View>
+                  <Text style={styles.taskRowPri}>{task.priority}</Text>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 
@@ -417,29 +397,41 @@ export default function MobileApp() {
 
                 {activeProjectTab === 'tasks' && (
                   <View>
-                    {tasks.filter((t) => t.project?.includes(selectedProject.name)).map((t) => (
-                      <View key={t.id} style={styles.taskRow}>
-                        <Text style={styles.taskRowTitle}>{t.title}</Text>
+                    {tasks.filter((t) => t.project === selectedProject.name).length === 0 ? (
+                      <View style={styles.emptyCard}>
+                        <Text style={styles.emptySub}>No tasks associated with this project yet.</Text>
                       </View>
-                    ))}
+                    ) : (
+                      tasks.filter((t) => t.project === selectedProject.name).map((t) => (
+                        <View key={t.id} style={styles.taskRow}>
+                          <Text style={styles.taskRowTitle}>{t.title}</Text>
+                        </View>
+                      ))
+                    )}
                   </View>
                 )}
 
                 {activeProjectTab === 'files' && (
                   <View>
-                    {files.filter((f) => f.projectId === selectedProject.id).map((f) => (
-                      <TouchableOpacity
-                        key={f.id}
-                        style={styles.fileRow}
-                        onPress={() => setActiveFilePreview(f)}
-                      >
-                        <Text style={{ fontSize: 18 }}>{f.fileType === 'Image' ? '🖼️' : '📄'}</Text>
-                        <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text style={styles.taskRowTitle} numberOfLines={1}>{f.fileName}</Text>
-                          <Text style={styles.taskRowSub}>{f.size} • {f.uploadedBy}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
+                    {files.filter((f) => f.projectId === selectedProject.id).length === 0 ? (
+                      <View style={styles.emptyCard}>
+                        <Text style={styles.emptySub}>No files uploaded for this project yet.</Text>
+                      </View>
+                    ) : (
+                      files.filter((f) => f.projectId === selectedProject.id).map((f) => (
+                        <TouchableOpacity
+                          key={f.id}
+                          style={styles.fileRow}
+                          onPress={() => setActiveFilePreview(f)}
+                        >
+                          <Text style={{ fontSize: 18 }}>{f.fileType === 'Image' ? '🖼️' : '📄'}</Text>
+                          <View style={{ flex: 1, marginLeft: 10 }}>
+                            <Text style={styles.taskRowTitle} numberOfLines={1}>{f.fileName}</Text>
+                            <Text style={styles.taskRowSub}>{f.size} • {f.uploadedBy}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))
+                    )}
                   </View>
                 )}
               </View>
@@ -447,24 +439,49 @@ export default function MobileApp() {
               <View>
                 <View style={styles.screenHeaderRow}>
                   <Text style={styles.screenTitle}>Projects</Text>
+                  <TouchableOpacity
+                    style={styles.btnSmall}
+                    onPress={() => {
+                      setQuickType('project');
+                      setIsQuickAddOpen(true);
+                    }}
+                  >
+                    <Text style={styles.btnSmallText}>+ New</Text>
+                  </TouchableOpacity>
                 </View>
 
-                {projects.map((proj) => (
-                  <TouchableOpacity
-                    key={proj.id}
-                    style={styles.projectCard}
-                    onPress={() => setSelectedProject(proj)}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text style={styles.projectCardName}>{proj.name}</Text>
-                      <Text style={styles.healthBadge}>{proj.health}</Text>
-                    </View>
-                    <Text style={styles.projectCardDesc}>{proj.description}</Text>
-                    <View style={styles.progressBar}>
-                      <View style={[styles.progressFill, { width: `${proj.progress}%` }]} />
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                {projects.length === 0 ? (
+                  <View style={styles.emptyCard}>
+                    <Text style={styles.emptyTitle}>NO PROJECTS YET</Text>
+                    <Text style={styles.emptySub}>Create your first KAVEXA project to start tracking.</Text>
+                    <TouchableOpacity
+                      style={[styles.btnSmall, { marginTop: 12 }]}
+                      onPress={() => {
+                        setQuickType('project');
+                        setIsQuickAddOpen(true);
+                      }}
+                    >
+                      <Text style={styles.btnSmallText}>+ Create Project</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  projects.map((proj) => (
+                    <TouchableOpacity
+                      key={proj.id}
+                      style={styles.projectCard}
+                      onPress={() => setSelectedProject(proj)}
+                    >
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Text style={styles.projectCardName}>{proj.name}</Text>
+                        <Text style={styles.healthBadge}>{proj.health}</Text>
+                      </View>
+                      <Text style={styles.projectCardDesc}>{proj.description}</Text>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: `${proj.progress}%` }]} />
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
               </View>
             )}
           </View>
@@ -475,24 +492,58 @@ export default function MobileApp() {
           <View style={{ paddingBottom: 110 }}>
             <Text style={styles.screenTitle}>Profile & System</Text>
 
+            {/* Identity Card */}
             <View style={styles.card}>
+              <Text style={styles.cardSub}>IDENTITY</Text>
               <Text style={styles.profileName}>{currentMember.name}</Text>
               <Text style={styles.profileRole}>{currentMember.role}</Text>
-              <Text style={styles.profileEmail}>✓ {currentMember.email}</Text>
+              <Text style={styles.profileEmail}>
+                {currentMember.isLoggedIn ? `✓ ${currentMember.email}` : 'Not signed in'}
+              </Text>
+              <TouchableOpacity
+                style={[styles.btnSecondary, { marginTop: 10 }]}
+                onPress={() => {
+                  setEditName(currentMember.name === 'Profile not configured' ? '' : currentMember.name);
+                  setEditRole(currentMember.role === 'Role not configured' ? '' : currentMember.role);
+                  setEditEmail(currentMember.email === 'Not signed in' ? '' : currentMember.email);
+                  setIsAuthModalOpen(true);
+                }}
+              >
+                <Text style={styles.btnSecondaryText}>
+                  {currentMember.isLoggedIn ? 'Edit Profile' : 'Complete Profile'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Study Hub Shortcut */}
             <View style={styles.card}>
-              <Text style={styles.cardSub}>PRIVATE STUDY HUB</Text>
-              {studyTasks.map((s) => (
-                <View key={s.id} style={{ marginTop: 8 }}>
-                  <Text style={styles.taskRowTitle}>{s.title}</Text>
-                  <Text style={styles.taskRowSub}>{s.subject} • {s.dueDate}</Text>
-                </View>
-              ))}
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.cardSub}>PRIVATE STUDY HUB</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setQuickType('study');
+                    setIsQuickAddOpen(true);
+                  }}
+                >
+                  <Text style={styles.linkText}>+ Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {studyTasks.length === 0 ? (
+                <Text style={[styles.emptySub, { marginTop: 4 }]}>
+                  No upcoming academic work. Your assignments and exam deadlines will appear here.
+                </Text>
+              ) : (
+                studyTasks.map((s) => (
+                  <View key={s.id} style={{ marginTop: 8 }}>
+                    <Text style={styles.taskRowTitle}>{s.title}</Text>
+                    <Text style={styles.taskRowSub}>{s.subject} • {s.dueDate}</Text>
+                  </View>
+                ))
+              )}
             </View>
 
-            {/* Status Switcher */}
+            {/* Live Status */}
             <View style={styles.card}>
               <Text style={styles.cardSub}>LIVE STATUS</Text>
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
@@ -513,15 +564,64 @@ export default function MobileApp() {
         )}
       </ScrollView>
 
+      {/* ================= PROFILE SETUP MODAL ================= */}
+      <Modal visible={isAuthModalOpen} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Configure Profile</Text>
+            <Text style={styles.modalSub}>Define your real founder identity & email.</Text>
+
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Alex Chen"
+              placeholderTextColor="#666666"
+              value={editName}
+              onChangeText={setEditName}
+            />
+
+            <Text style={styles.inputLabel}>Role / Focus Area</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Technical Lead"
+              placeholderTextColor="#666666"
+              value={editRole}
+              onChangeText={setEditRole}
+            />
+
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. alex@kavexa.io"
+              placeholderTextColor="#666666"
+              value={editEmail}
+              onChangeText={setEditEmail}
+              keyboardType="email-address"
+            />
+
+            <TouchableOpacity style={styles.btnPrimary} onPress={handleSaveProfile}>
+              <Text style={styles.btnPrimaryText}>Save Identity</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.btnSecondary, { marginTop: 8 }]}
+              onPress={() => setIsAuthModalOpen(false)}
+            >
+              <Text style={styles.btnSecondaryText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* ================= QUICK ADD MODAL ================= */}
       <Modal visible={isQuickAddOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Quick Add</Text>
-            <Text style={styles.modalSub}>Fast operational capture from anywhere.</Text>
+            <Text style={styles.modalSub}>Fast operational capture into real database.</Text>
 
             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
-              {(['task', 'file', 'study'] as const).map((t) => (
+              {(['task', 'project', 'file', 'study'] as const).map((t) => (
                 <TouchableOpacity
                   key={t}
                   style={[styles.typePill, quickType === t && styles.typePillActive]}
@@ -562,13 +662,12 @@ export default function MobileApp() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Why This Task Is Recommended</Text>
-            <Text style={styles.modalSub}>Backend algorithm evaluation breakdown.</Text>
+            <Text style={styles.modalSub}>Calculated from real task deadline, priority, and dependencies.</Text>
 
             <View style={{ gap: 8, marginVertical: 12 }}>
-              <Text style={styles.scoreText}>Deadline Urgency: 28 / 30</Text>
-              <Text style={styles.scoreText}>Project Impact: 18 / 20</Text>
-              <Text style={styles.scoreText}>Dependency Unlocking: 14 / 15</Text>
-              <Text style={styles.scoreText}>Schedule Fit: 9 / 10</Text>
+              <Text style={styles.scoreText}>• Baseline Priority Score: 20 pts</Text>
+              <Text style={styles.scoreText}>• Critical Path Velocity Score: 18 pts</Text>
+              <Text style={styles.scoreText}>• Unblocks Dependent Modules: 14 pts</Text>
             </View>
 
             <TouchableOpacity style={styles.btnPrimary} onPress={() => setIsWhyModalOpen(false)}>
@@ -589,7 +688,7 @@ export default function MobileApp() {
               <Text style={{ fontSize: 36, marginBottom: 8 }}>
                 {activeFilePreview?.fileType === 'Image' ? '🖼️' : '📑'}
               </Text>
-              <Text style={{ color: '#F5F5F5', fontWeight: '700' }}>Synchronized with Desktop</Text>
+              <Text style={{ color: '#F5F5F5', fontWeight: '700' }}>Synchronized with Cloud Firestore</Text>
             </View>
 
             <TouchableOpacity
@@ -704,7 +803,7 @@ const styles = StyleSheet.create({
     borderRadius: 6
   },
   authBadgeText: {
-    color: '#10B981',
+    color: '#6366F1',
     fontSize: 11,
     fontWeight: '700'
   },
@@ -785,7 +884,8 @@ const styles = StyleSheet.create({
     borderColor: '#242424',
     borderRadius: 14,
     padding: 20,
-    alignItems: 'center'
+    alignItems: 'center',
+    marginBottom: 8
   },
   emptyTitle: {
     color: '#F5F5F5',
@@ -795,7 +895,8 @@ const styles = StyleSheet.create({
   emptySub: {
     color: '#666666',
     fontSize: 11,
-    marginTop: 2
+    marginTop: 2,
+    textAlign: 'center'
   },
   taskRow: {
     backgroundColor: '#0A0A0A',
@@ -839,24 +940,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700'
   },
-  scheduleRow: {
-    backgroundColor: '#0A0A0A',
-    borderWidth: 1,
-    borderColor: '#242424',
-    borderRadius: 10,
-    padding: 12
-  },
-  scheduleTime: {
-    color: '#6366F1',
-    fontSize: 11,
-    fontWeight: '700'
-  },
-  scheduleTitle: {
-    color: '#F5F5F5',
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 2
-  },
   screenHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -870,8 +953,8 @@ const styles = StyleSheet.create({
   },
   btnSmall: {
     backgroundColor: '#6366F1',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 6
   },
   btnSmallText: {
@@ -988,7 +1071,8 @@ const styles = StyleSheet.create({
   profileName: {
     color: '#F5F5F5',
     fontSize: 16,
-    fontWeight: '800'
+    fontWeight: '800',
+    marginTop: 4
   },
   profileRole: {
     color: '#6366F1',
@@ -996,7 +1080,7 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   profileEmail: {
-    color: '#10B981',
+    color: '#A3A3A3',
     fontSize: 11,
     marginTop: 4
   },
@@ -1033,13 +1117,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#111111',
     borderWidth: 1,
     borderColor: '#242424',
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center'
   },
   btnSecondaryText: {
     color: '#A3A3A3',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600'
   },
   modalOverlay: {
@@ -1067,6 +1151,12 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontSize: 11,
     marginBottom: 12
+  },
+  inputLabel: {
+    color: '#A3A3A3',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 4
   },
   typePill: {
     flex: 1,

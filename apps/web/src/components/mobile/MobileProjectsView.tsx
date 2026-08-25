@@ -38,8 +38,8 @@ export const MobileProjectsView: React.FC = () => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           p.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'All' ? true :
-                          filterStatus === 'Active' ? p.status === 'In Progress' || p.status === 'Testing' :
-                          filterStatus === 'Planning' ? p.status === 'Planning' || p.status === 'Design' :
+                          filterStatus === 'Active' ? p.status === 'In Progress' || p.status === 'Review' :
+                          filterStatus === 'Planning' ? p.status === 'Planning' :
                           p.status === 'On Hold';
     return matchesSearch && matchesStatus;
   });

@@ -38,7 +38,7 @@ export const MobileTasksView: React.FC = () => {
     const matchesFilter =
       filterMode === 'All' ? true :
       filterMode === 'Mine' ? t.assignedMemberId === currentMemberId :
-      filterMode === 'Today' ? t.dueDate?.includes(new Date().toISOString().slice(0, 10)) :
+      filterMode === 'Today' ? t.deadline?.includes(new Date().toISOString().slice(0, 10)) :
       t.status !== 'Completed';
 
     return matchesSearch && matchesFilter;
@@ -184,7 +184,7 @@ export const MobileTasksView: React.FC = () => {
                       {t.title}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: '#666666', marginTop: '0.15rem' }}>
-                      {proj ? proj.name : t.category} • {t.dueDate ? `Due ${new Date(t.dueDate).toLocaleDateString()}` : 'No deadline'}
+                      {proj ? proj.name : t.category} • {t.deadline ? `Due ${new Date(t.deadline).toLocaleDateString()}` : 'No deadline'}
                     </div>
                   </div>
                 </div>

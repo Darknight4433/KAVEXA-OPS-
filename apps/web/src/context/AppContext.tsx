@@ -285,18 +285,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const currentMember =
     members.find((m) => m.id === currentMemberId) ||
-    members[0] || {
-      id: 'member_vaish',
-      name: 'Vaish',
-      role: 'Co-Founder',
-      email: 'vaish@kavexa.io',
-      availability: 'Available',
-      weeklyWorkloadHours: 14,
-      assignedTasksCount: 5,
-      completedTasksCount: 18,
-      skills: ['React', 'TypeScript'],
-      todayFreeSlots: []
-    };
+    members[0] ||
+    (authUser
+      ? {
+          id: authUser.uid,
+          name: authUser.displayName || authUser.email?.split('@')[0] || 'Authenticated User',
+          role: 'Not configured',
+          email: authUser.email || '',
+          avatarUrl: authUser.photoURL || '/app-icon.png',
+          availability: 'Available',
+          weeklyWorkloadHours: 0,
+          assignedTasksCount: 0,
+          completedTasksCount: 0,
+          skills: [],
+          todayFreeSlots: []
+        }
+      : {
+          id: 'unauthenticated_user',
+          name: 'Profile not configured',
+          role: 'Role not configured',
+          email: 'Not signed in',
+          avatarUrl: '/app-icon.png',
+          availability: 'Offline',
+          weeklyWorkloadHours: 0,
+          assignedTasksCount: 0,
+          completedTasksCount: 0,
+          skills: [],
+          todayFreeSlots: []
+        });
 
   return (
     <AppContext.Provider

@@ -7,12 +7,13 @@ import {
   Scale,
   Zap,
   Clock,
-  PieChart
+  PieChart,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 
 export const AnalyticsHub: React.FC = () => {
-  const { tasks, projects, studyTasks, members } = useApp();
+  const { tasks, projects, studyTasks, members, setActiveTab } = useApp();
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.status === 'Completed').length;
@@ -36,153 +37,193 @@ export const AnalyticsHub: React.FC = () => {
       {/* Header */}
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
-          <BarChart3 size={22} style={{ color: 'var(--accent-cyan)' }} />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc' }}>
-            System Analytics & Productivity Velocity
+          <BarChart3 size={22} style={{ color: '#6366F1' }} />
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F5F5F5' }}>
+            System Analytics & Velocity
           </h1>
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-          Performance metrics, work-study balance ratios, and project health distributions.
+        <p style={{ color: '#A3A3A3', fontSize: '0.85rem' }}>
+          Calculated from real task completions, project velocity, and logged IDE hours.
         </p>
       </div>
 
-      {/* Top 4 Metric Cards */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        <div className="card">
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            Task Completion Velocity
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-            {completionRate}%
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-            {completedTasks} / {totalTasks} Tasks Shipped
-          </div>
+      {totalTasks === 0 ? (
+        <div
+          style={{
+            backgroundColor: '#0A0A0A',
+            border: '1px solid #242424',
+            borderRadius: 'var(--radius-lg)',
+            padding: '4rem 2rem',
+            textAlign: 'center',
+            maxWidth: '560px',
+            margin: '2rem auto'
+          }}
+        >
+          <BarChart3 size={40} style={{ color: '#444444', marginBottom: '1rem' }} />
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#F5F5F5', marginBottom: '0.4rem' }}>
+            Not enough data yet
+          </h2>
+          <p style={{ fontSize: '0.8rem', color: '#666666', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+            Complete tasks, log IDE sessions, and progress through active projects to generate real operational insights.
+          </p>
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className="btn btn-primary"
+            style={{ padding: '0.55rem 1.25rem', fontSize: '0.85rem' }}
+          >
+            <span>Go to Tasks</span>
+            <ArrowRight size={14} />
+          </button>
         </div>
-
-        <div className="card">
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            Total Work in Progress
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
-            {totalTasks - completedTasks}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-            Active operational queue
-          </div>
-        </div>
-
-        <div className="card">
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            Study / Work Balance Ratio
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
-            {Math.round((studyHours / (studyHours + kavexaHours || 1)) * 100)}% / {Math.round((kavexaHours / (studyHours + kavexaHours || 1)) * 100)}%
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-            Academic vs Ops Distribution
-          </div>
-        </div>
-
-        <div className="card">
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-            Blocked Dependency Items
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: blockedTasks > 0 ? 'var(--accent-amber)' : 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-            {blockedTasks}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-            {blockedTasks === 0 ? '0 Blockers' : 'Prerequisites incomplete'}
-          </div>
-        </div>
-      </div>
-
-      {/* Visual Analytics Charts */}
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        {/* Weekly Productivity Velocity Bar Chart */}
-        <div className="card">
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <TrendingUp size={16} style={{ color: 'var(--accent-primary)' }} />
-            <span>Weekly Sprint Velocity (Tasks Completed)</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '180px', paddingTop: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
-            {[
-              { day: 'Mon', count: 4, height: '40%' },
-              { day: 'Tue', count: 7, height: '70%' },
-              { day: 'Wed', count: 5, height: '50%' },
-              { day: 'Thu', count: 9, height: '90%' },
-              { day: 'Fri', count: 6, height: '60%' },
-              { day: 'Sat', count: 8, height: '80%' },
-              { day: 'Sun (Today)', count: 10, height: '100%' }
-            ].map((bar) => (
-              <div key={bar.day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>{bar.count}</span>
-                <div
-                  style={{
-                    width: '32px',
-                    height: bar.height,
-                    background: 'linear-gradient(180deg, #6366f1, rgba(99, 102, 241, 0.2))',
-                    borderRadius: '6px 6px 0 0',
-                    boxShadow: '0 0 10px rgba(99, 102, 241, 0.3)'
-                  }}
-                />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{bar.day}</span>
+      ) : (
+        <>
+          {/* Top 4 Metric Cards */}
+          <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
+            <div className="card">
+              <div style={{ fontSize: '0.75rem', color: '#666666', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                Task Completion Velocity
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Priority Level Breakdown */}
-        <div className="card">
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Zap size={16} style={{ color: 'var(--accent-amber)' }} />
-            <span>Priority Level Distribution</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                <span style={{ color: '#f87171' }}>⚡ Critical ({criticalCount})</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round((criticalCount / (totalTasks || 1)) * 100)}%</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10B981', fontFamily: 'var(--font-mono)' }}>
+                {completionRate}%
               </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${(criticalCount / (totalTasks || 1)) * 100}%`, height: '100%', background: '#ef4444' }} />
+              <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginTop: '0.2rem' }}>
+                {completedTasks} / {totalTasks} Tasks Shipped
               </div>
             </div>
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                <span style={{ color: '#fbbf24' }}>High Priority ({highCount})</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round((highCount / (totalTasks || 1)) * 100)}%</span>
+            <div className="card">
+              <div style={{ fontSize: '0.75rem', color: '#666666', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                Total Work in Progress
               </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${(highCount / (totalTasks || 1)) * 100}%`, height: '100%', background: '#f59e0b' }} />
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#6366F1', fontFamily: 'var(--font-mono)' }}>
+                {totalTasks - completedTasks}
               </div>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                <span style={{ color: '#818cf8' }}>Medium Priority ({mediumCount})</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round((mediumCount / (totalTasks || 1)) * 100)}%</span>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${(mediumCount / (totalTasks || 1)) * 100}%`, height: '100%', background: '#6366f1' }} />
+              <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginTop: '0.2rem' }}>
+                Active operational queue
               </div>
             </div>
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                <span style={{ color: '#94a3b8' }}>Low Priority ({lowCount})</span>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round((lowCount / (totalTasks || 1)) * 100)}%</span>
+            <div className="card">
+              <div style={{ fontSize: '0.75rem', color: '#666666', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                Study / Work Ratio
               </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${(lowCount / (totalTasks || 1)) * 100}%`, height: '100%', background: '#64748b' }} />
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#06B6D4', fontFamily: 'var(--font-mono)' }}>
+                {Math.round((studyHours / (studyHours + kavexaHours || 1)) * 100)}% / {Math.round((kavexaHours / (studyHours + kavexaHours || 1)) * 100)}%
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginTop: '0.2rem' }}>
+                Academic vs Ops Distribution
+              </div>
+            </div>
+
+            <div className="card">
+              <div style={{ fontSize: '0.75rem', color: '#666666', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                Blocked Items
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: blockedTasks > 0 ? '#F59E0B' : '#10B981', fontFamily: 'var(--font-mono)' }}>
+                {blockedTasks}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginTop: '0.2rem' }}>
+                {blockedTasks === 0 ? '0 Blockers' : 'Prerequisites incomplete'}
               </div>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Visual Analytics Charts */}
+          <div className="grid-2" style={{ gap: '1.5rem' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#F5F5F5', marginBottom: '1rem' }}>
+                Priority Breakdown
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
+                    <span style={{ color: '#EF4444', fontWeight: 700 }}>Critical</span>
+                    <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)' }}>{criticalCount}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#171717', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${(criticalCount / (totalTasks || 1)) * 100}%`, height: '100%', backgroundColor: '#EF4444' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
+                    <span style={{ color: '#F59E0B', fontWeight: 700 }}>High</span>
+                    <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)' }}>{highCount}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#171717', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${(highCount / (totalTasks || 1)) * 100}%`, height: '100%', backgroundColor: '#F59E0B' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
+                    <span style={{ color: '#6366F1', fontWeight: 700 }}>Medium</span>
+                    <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)' }}>{mediumCount}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#171717', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${(mediumCount / (totalTasks || 1)) * 100}%`, height: '100%', backgroundColor: '#6366F1' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
+                    <span style={{ color: '#10B981', fontWeight: 700 }}>Low</span>
+                    <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)' }}>{lowCount}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#171717', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${(lowCount / (totalTasks || 1)) * 100}%`, height: '100%', backgroundColor: '#10B981' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#F5F5F5', marginBottom: '1rem' }}>
+                Project Health Distribution
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {projects.length === 0 ? (
+                  <div style={{ color: '#666666', fontSize: '0.8rem', textAlign: 'center', padding: '2rem 0' }}>
+                    No active projects to evaluate.
+                  </div>
+                ) : (
+                  projects.map((p) => (
+                    <div
+                      key={p.id}
+                      style={{
+                        padding: '0.75rem',
+                        backgroundColor: '#111111',
+                        border: '1px solid #242424',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F5F5F5' }}>{p.name}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#666666' }}>{p.status} • {p.progress}%</div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '999px',
+                          backgroundColor: p.health?.status === 'Healthy' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                          color: p.health?.status === 'Healthy' ? '#10B981' : '#F59E0B'
+                        }}
+                      >
+                        {p.health?.status || 'Healthy'}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

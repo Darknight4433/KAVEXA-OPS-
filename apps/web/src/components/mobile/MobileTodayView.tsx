@@ -182,7 +182,7 @@ export const MobileTodayView: React.FC<MobileTodayViewProps> = ({
                 {doFirstTask.priority} Priority
               </span>
               <span style={{ fontSize: '0.7rem', color: '#666666' }}>
-                Est: {doFirstTask.estimatedMinutes || 45} mins
+                Est: {doFirstTask.estimatedDuration || 45} mins
               </span>
             </div>
 
@@ -191,7 +191,7 @@ export const MobileTodayView: React.FC<MobileTodayViewProps> = ({
             </h3>
 
             <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginBottom: '1.25rem' }}>
-              {doFirstTask.category} • Due {doFirstTask.dueDate ? new Date(doFirstTask.dueDate).toLocaleDateString() : 'Today'}
+              {doFirstTask.category} • Due {doFirstTask.deadline ? new Date(doFirstTask.deadline).toLocaleDateString() : 'No deadline'}
             </div>
 
             <div style={{ display: 'flex', gap: '0.65rem' }}>

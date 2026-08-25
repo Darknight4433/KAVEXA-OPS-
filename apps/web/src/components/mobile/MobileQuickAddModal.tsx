@@ -72,24 +72,32 @@ export const MobileQuickAddModal: React.FC<MobileQuickAddModalProps> = ({
       createResource({
         title: title.trim(),
         url: url.trim() || 'https://kavexa.io',
-        type: 'General Link',
+        resourceType: 'Reference Website',
         projectId: targetProjId,
-        isPinned: true
+        isPinned: true,
+        createdBy: currentMember.name,
+        description: 'Captured resource',
+        tags: ['QuickAdd']
       });
     } else if (activeType === 'document') {
       createDocument({
         title: title.trim(),
         content: '# ' + title.trim() + '\n\nInitial draft notes.',
         projectId: targetProjId,
-        authorId: currentMember.id,
-        type: 'PRD'
+        documentType: 'PRD',
+        description: 'Quick draft',
+        createdBy: currentMember.name,
+        tags: ['QuickAdd']
       });
     } else if (activeType === 'research') {
       createResearch({
         title: title.trim(),
-        category: 'Technical',
+        category: 'Technology Research',
         summary: 'Investigation notes.',
+        notes: '',
         projectId: targetProjId,
+        createdBy: currentMember.name,
+        tags: ['QuickAdd'],
         sourceUrl: url.trim() || undefined
       });
     } else if (activeType === 'file') {
