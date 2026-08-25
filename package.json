@@ -1,0 +1,44 @@
+{
+  "name": "kavexa-ops",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KAVEXA Operations & Productivity System (KAVEXA OPS)",
+  "main": "electron/main.js",
+  "author": "KAVEXA Team <team@kavexa.io>",
+  "scripts": {
+    "dev": "npm --workspace=apps/web run dev",
+    "build": "npm --workspace=apps/web run build",
+    "desktop": "electron .",
+    "desktop:build": "npm run build --prefix apps/web && electron-builder",
+    "server": "npm --workspace=server run dev",
+    "mobile": "npm --workspace=apps/mobile start"
+  },
+  "build": {
+    "appId": "com.kavexa.ops",
+    "productName": "KAVEXA OPS",
+    "copyright": "Copyright © 2026 KAVEXA",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "electron/**/*",
+      "apps/web/dist/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "apps/web/public/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "KAVEXA OPS"
+    }
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^24.13.3"
+  }
+}
