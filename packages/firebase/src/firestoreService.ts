@@ -62,11 +62,16 @@ class WorkspaceFirestoreStore {
   private storageKey = 'kavexa_ops_workspace_v3_clean';
   private firestoreDocName = 'kavexa_main';
   private isSyncingFromCloud = false;
+  private hasLoadedInitialData = false;
 
   constructor() {
     this.loadState();
     this.recomputeSystemIntelligence();
     this.initRealtimeFirestoreSync();
+  }
+
+  public isInitialized(): boolean {
+    return this.hasLoadedInitialData;
   }
 
   private initRealtimeFirestoreSync() {
@@ -77,6 +82,7 @@ class WorkspaceFirestoreStore {
         onSnapshot(
           workspaceDocRef,
           (docSnap) => {
+            this.hasLoadedInitialData = true;
             if (docSnap.exists()) {
               const data = docSnap.data();
               if (data) {
@@ -101,14 +107,21 @@ class WorkspaceFirestoreStore {
                 this.notify();
                 this.isSyncingFromCloud = false;
               }
+            } else {
+              this.notify();
             }
           },
           (error) => {
+            this.hasLoadedInitialData = true;
             console.warn('Firestore live listener info:', error.message);
+            this.notify();
           }
         );
+      } else {
+        this.hasLoadedInitialData = true;
       }
     } catch (e) {
+      this.hasLoadedInitialData = true;
       console.warn('Firestore real-time sync init:', e);
     }
   }
@@ -312,7 +325,7 @@ class WorkspaceFirestoreStore {
   }
 
   // --- ACTIONS: TASKS ---
-  public createTask(task: Partial<Task>): Task {
+  public createTask(task: Partial<Task>, actorId = 'current_user', actorName = 'Founder'): Task {
     const newTask: Task = {
       id: generateId('task'),
       title: task.title || 'Untitled Task',
@@ -320,7 +333,7 @@ class WorkspaceFirestoreStore {
       category: task.category || 'KAVEXA Work',
       priority: task.priority || 'Medium',
       status: task.status || 'Not Started',
-      assignedMemberId: task.assignedMemberId || 'member_vaish',
+      assignedMemberId: task.assignedMemberId || actorId,
       projectId: task.projectId,
       studySubjectId: task.studySubjectId,
       deadline: task.deadline || new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
@@ -350,23 +363,23 @@ class WorkspaceFirestoreStore {
     };
 
     this.tasks.push(newTask);
-    this.logActivity('member_vaish', 'Vaish', 'Created new task', 'task', newTask.title);
+    this.logActivity(actorId, actorName, 'Created new task', 'task', newTask.title);
     this.recomputeSystemIntelligence();
     this.saveState();
     return newTask;
   }
 
-  public updateTask(taskId: string, updates: Partial<Task>) {
+  public updateTask(taskId: string, updates: Partial<Task>, actorId = 'current_user', actorName = 'Founder') {
     const idx = this.tasks.findIndex((t) => t.id === taskId);
     if (idx !== -1) {
       this.tasks[idx] = { ...this.tasks[idx], ...updates };
-      this.logActivity('member_vaish', 'Vaish', 'Updated task', 'task', this.tasks[idx].title);
+      this.logActivity(actorId, actorName, 'Updated task', 'task', this.tasks[idx].title);
       this.recomputeSystemIntelligence();
       this.saveState();
     }
   }
 
-  public deleteTask(taskId: string) {
+  public deleteTask(taskId: string, actorId = 'current_user', actorName = 'Founder') {
     const task = this.tasks.find((t) => t.id === taskId);
     this.tasks = this.tasks.filter((t) => t.id !== taskId);
     // Remove from other dependencies
@@ -376,13 +389,13 @@ class WorkspaceFirestoreStore {
       }
     });
     if (task) {
-      this.logActivity('member_vaish', 'Vaish', 'Deleted task', 'task', task.title);
+      this.logActivity(actorId, actorName, 'Deleted task', 'task', task.title);
     }
     this.recomputeSystemIntelligence();
     this.saveState();
   }
 
-  public toggleTaskComplete(taskId: string) {
+  public toggleTaskComplete(taskId: string, actorId = 'current_user', actorName = 'Founder') {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task) return;
     const isDone = task.status === 'Completed';
@@ -390,8 +403,8 @@ class WorkspaceFirestoreStore {
     task.completedAt = isDone ? undefined : new Date().toISOString();
 
     this.logActivity(
-      task.assignedMemberId || 'member_vaish',
-      task.assignedMemberId === 'member_alex' ? 'Alex M.' : 'Vaish',
+      actorId,
+      actorName,
       isDone ? 'Reopened task' : 'Completed task',
       'task',
       task.title
@@ -402,7 +415,7 @@ class WorkspaceFirestoreStore {
   }
 
   // --- ACTIONS: PROJECTS ---
-  public createProject(project: Partial<Project>): Project {
+  public createProject(project: Partial<Project>, actorId = 'current_user', actorName = 'Founder'): Project {
     const newProj: Project = {
       id: generateId('proj'),
       name: project.name || 'New Project',
@@ -413,7 +426,7 @@ class WorkspaceFirestoreStore {
       startDate: project.startDate || new Date().toISOString().split('T')[0],
       deadline: project.deadline || new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0],
       progress: 0,
-      assignedMemberIds: project.assignedMemberIds || ['member_vaish', 'member_alex'],
+      assignedMemberIds: project.assignedMemberIds || [actorId],
       taskIds: [],
       dependencies: [],
       media: project.media || [],
@@ -440,7 +453,7 @@ class WorkspaceFirestoreStore {
     };
 
     this.projects.push(newProj);
-    this.logActivity('member_vaish', 'Vaish', 'Created new project', 'project', newProj.name);
+    this.logActivity(actorId, actorName, 'Created new project', 'project', newProj.name);
     this.recomputeSystemIntelligence();
     this.saveState();
     return newProj;
