@@ -120,8 +120,11 @@ interface AppContextType {
   createFile: (file: Partial<ProjectFile>) => ProjectFile;
   deleteFile: (fileId: string) => void;
 
+  createSubject: (subject: Partial<StudySubject>) => StudySubject;
+  deleteSubject: (subjectId: string) => void;
   createStudyTask: (task: Partial<StudyTask>) => StudyTask;
   toggleStudyTask: (taskId: string) => void;
+  deleteStudyTask: (taskId: string) => void;
 
   createScheduleEvent: (event: Partial<ScheduleEvent>) => ScheduleEvent;
   deleteScheduleEvent: (eventId: string) => void;
@@ -375,11 +378,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createFile: (file) => workspaceFirestore.createFile(file),
         deleteFile: (fileId) => workspaceFirestore.deleteFile(fileId),
 
+        createSubject: (subject) => workspaceFirestore.createSubject(subject),
+        deleteSubject: (subjectId) => workspaceFirestore.deleteSubject(subjectId),
         createStudyTask: (task) => workspaceFirestore.createStudyTask(task),
         toggleStudyTask: (taskId) => {
           workspaceFirestore.toggleStudyTask(taskId);
           triggerConfetti();
         },
+        deleteStudyTask: (taskId) => workspaceFirestore.deleteStudyTask(taskId),
 
         createScheduleEvent: (event) => workspaceFirestore.createScheduleEvent(event),
         deleteScheduleEvent: (eventId) => workspaceFirestore.deleteScheduleEvent(eventId),

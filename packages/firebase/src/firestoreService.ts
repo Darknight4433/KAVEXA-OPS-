@@ -618,7 +618,30 @@ class WorkspaceFirestoreStore {
     this.saveState();
   }
 
-  // --- ACTIONS: STUDY ---
+  // --- ACTIONS: STUDY & SUBJECTS ---
+  public createSubject(subject: Partial<StudySubject>): StudySubject {
+    const newSubject: StudySubject = {
+      id: generateId('sub'),
+      name: subject.name || 'New University Subject',
+      code: subject.code || 'CS101',
+      instructor: subject.instructor || 'Professor',
+      color: subject.color || '#06b6d4',
+      credits: subject.credits || 4,
+      weeklyHours: subject.weeklyHours || 6,
+      memberId: subject.memberId
+    };
+    this.subjects.push(newSubject);
+    this.logActivity('member_vaish', 'Vaish', 'Added university course', 'study', newSubject.name);
+    this.saveState();
+    return newSubject;
+  }
+
+  public deleteSubject(subjectId: string) {
+    this.subjects = this.subjects.filter((s) => s.id !== subjectId);
+    this.studyTasks = this.studyTasks.filter((t) => t.subjectId !== subjectId);
+    this.saveState();
+  }
+
   public toggleStudyTask(taskId: string) {
     const st = this.studyTasks.find((t) => t.id === taskId);
     if (st) {
@@ -629,10 +652,15 @@ class WorkspaceFirestoreStore {
     }
   }
 
+  public deleteStudyTask(taskId: string) {
+    this.studyTasks = this.studyTasks.filter((t) => t.id !== taskId);
+    this.saveState();
+  }
+
   public createStudyTask(task: Partial<StudyTask>): StudyTask {
     const newTask: StudyTask = {
       id: generateId('st'),
-      subjectId: task.subjectId || this.subjects[0]?.id || 'sub_ds',
+      subjectId: task.subjectId || this.subjects[0]?.id || 'sub_general',
       title: task.title || 'New Study Assignment',
       description: task.description || '',
       type: task.type || 'Homework',
@@ -640,7 +668,8 @@ class WorkspaceFirestoreStore {
       priority: task.priority || 'High',
       estimatedStudyTime: task.estimatedStudyTime || 60,
       isCompleted: false,
-      examDate: task.examDate
+      examDate: task.examDate,
+      memberId: task.memberId
     };
     this.studyTasks.push(newTask);
     this.logActivity('member_vaish', 'Vaish', 'Added new academic study task', 'study', newTask.title);
