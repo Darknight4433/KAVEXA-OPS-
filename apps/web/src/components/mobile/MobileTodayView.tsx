@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Zap,
   Clock,
@@ -8,7 +8,12 @@ import {
   ArrowRight,
   Flame,
   AlertTriangle,
-  Play
+  Play,
+  Bell,
+  HelpCircle,
+  X,
+  ChevronRight,
+  Compass
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getDoFirstTask, calculateTeamSync } from '@kavexa/intelligence';
@@ -16,12 +21,12 @@ import { formatDuration, getDaysUntil } from '@kavexa/utils';
 
 interface MobileTodayViewProps {
   onGoToTasks: () => void;
-  onGoToSchedule: () => void;
+  onGoToProjects: () => void;
 }
 
 export const MobileTodayView: React.FC<MobileTodayViewProps> = ({
   onGoToTasks,
-  onGoToSchedule
+  onGoToProjects
 }) => {
   const {
     currentMember,
@@ -29,11 +34,13 @@ export const MobileTodayView: React.FC<MobileTodayViewProps> = ({
     projects,
     members,
     schedules,
-    studyTasks,
     toggleTaskComplete,
     triggerConfetti,
-    setIsFocusModeOpen
+    setIsFocusModeOpen,
+    setSelectedTaskId
   } = useApp();
+
+  const [isWhyModalOpen, setIsWhyModalOpen] = useState(false);
 
   const doFirstTask = getDoFirstTask(tasks, {
     allTasks: tasks,
@@ -43,365 +50,419 @@ export const MobileTodayView: React.FC<MobileTodayViewProps> = ({
     activeMemberId: currentMember.id
   });
 
-  const teamSync = calculateTeamSync(members, schedules);
-
-  // Top 3 high priority tasks for today
-  const todaysTasks = tasks
+  const nextTasks = tasks
     .filter((t) => t.status !== 'Completed' && t.id !== doFirstTask?.id)
     .slice(0, 3);
 
-  const pendingCount = tasks.filter((t) => t.status !== 'Completed').length;
-  const completedTodayCount = tasks.filter((t) => t.status === 'Completed').length;
+  // Current or next schedule event
+  const nextEvent = schedules
+    .filter((s) => s.memberId === currentMember.id || !s.memberId)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))[0];
+
+  const now = new Date();
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div style={{ padding: '1rem', paddingBottom: '90px', maxWidth: '600px', margin: '0 auto' }}>
-      {/* Mobile Top Header */}
+    <div style={{ padding: '1.25rem 1rem', paddingBottom: '90px', maxWidth: '600px', margin: '0 auto' }}>
+      {/* Top Header */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1.25rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+          marginBottom: '1.5rem'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <img
             src="/app-icon.png"
             alt="KAVEXA"
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              objectFit: 'cover',
-              border: '1px solid rgba(6, 182, 212, 0.4)',
-              boxShadow: '0 0 10px rgba(6, 182, 212, 0.25)'
-            }}
+            style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }}
           />
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Welcome back,
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
-              {currentMember.name}
+            <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#F5F5F5', letterSpacing: '0.05em' }}>
+              KAVEXA OPS
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className={`availability-pill avail-${currentMember.availability}`}>
-            {currentMember.availability}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            onClick={() => alert('All workspace alerts are up to date.')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#A3A3A3',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Bell size={18} />
+          </button>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: '#111111',
+              border: '1px solid #303030',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#F5F5F5',
+              fontSize: '0.75rem',
+              fontWeight: 800
+            }}
+          >
+            {currentMember.name.charAt(0)}
+          </div>
+        </div>
+      </div>
+
+      {/* Greeting Section */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F5F5F5', letterSpacing: '-0.02em', marginBottom: '0.2rem' }}>
+          {greeting}, {currentMember.name.split(' ')[0]}
+        </h1>
+        <p style={{ fontSize: '0.8rem', color: '#A3A3A3' }}>
+          Here is your high-impact operational focus for today.
+        </p>
+      </div>
+
+      {/* ================= TODAY'S FOCUS CARD ================= */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6366F1' }}>
+            TODAY'S FOCUS
           </span>
-        </div>
-      </div>
-
-      {/* Quick Summary Pill Bar */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '0.5rem',
-          marginBottom: '1.25rem'
-        }}
-      >
-        <div
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.65rem',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
-            {pendingCount}
-          </div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Pending</div>
+          {doFirstTask && (
+            <button
+              onClick={() => setIsWhyModalOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#666666',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <HelpCircle size={12} />
+              <span>Why this task?</span>
+            </button>
+          )}
         </div>
 
-        <div
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.65rem',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-            {completedTodayCount}
-          </div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Completed</div>
-        </div>
-
-        <div
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.65rem',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
-            {teamSync.bestCollaborationWindow ? '16:30' : 'Synced'}
-          </div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Free Slot</div>
-        </div>
-      </div>
-
-      {/* #1 DO FIRST AI Spotlight Card */}
-      {doFirstTask ? (
-        <div
-          style={{
-            background: 'linear-gradient(145deg, rgba(99, 102, 241, 0.18), rgba(6, 182, 212, 0.08))',
-            border: '1px solid rgba(99, 102, 241, 0.4)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '1.15rem',
-            marginBottom: '1.5rem',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
-            position: 'relative'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        {doFirstTask ? (
+          <div
+            style={{
+              backgroundColor: '#0A0A0A',
+              border: '1px solid #242424',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.25rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
               <span
                 style={{
                   fontSize: '0.65rem',
                   fontWeight: 800,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  color: '#f87171',
-                  padding: '0.2rem 0.5rem',
+                  padding: '0.15rem 0.45rem',
                   borderRadius: '4px',
-                  border: '1px solid rgba(239, 68, 68, 0.35)'
+                  backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                  color: '#818CF8',
+                  border: '1px solid rgba(99, 102, 241, 0.3)'
                 }}
               >
-                DO FIRST
+                {doFirstTask.priority} Priority
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)' }}>
-                {doFirstTask.priorityBreakdown?.totalScore || 94}/100
+              <span style={{ fontSize: '0.7rem', color: '#666666' }}>
+                Est: {doFirstTask.estimatedMinutes || 45} mins
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-              <Clock size={12} />
-              <span>{formatDuration(doFirstTask.estimatedDuration)}</span>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#F5F5F5', lineHeight: 1.4, marginBottom: '0.5rem' }}>
+              {doFirstTask.title}
+            </h3>
+
+            <div style={{ fontSize: '0.75rem', color: '#A3A3A3', marginBottom: '1.25rem' }}>
+              {doFirstTask.category} • Due {doFirstTask.dueDate ? new Date(doFirstTask.dueDate).toLocaleDateString() : 'Today'}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              <button
+                onClick={() => {
+                  setIsFocusModeOpen(true);
+                  setSelectedTaskId(doFirstTask.id);
+                }}
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '0.6rem', fontSize: '0.8rem', justifyContent: 'center' }}
+              >
+                <Play size={14} fill="#ffffff" />
+                <span>Start Focus</span>
+              </button>
+              <button
+                onClick={() => {
+                  toggleTaskComplete(doFirstTask.id);
+                  triggerConfetti();
+                }}
+                className="btn btn-secondary"
+                style={{ padding: '0.6rem 0.9rem', fontSize: '0.8rem' }}
+                title="Mark Completed"
+              >
+                <CheckCircle2 size={16} />
+              </button>
             </div>
           </div>
-
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.35, marginBottom: '0.45rem' }}>
-            {doFirstTask.title}
-          </h3>
-
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
-            {doFirstTask.description}
-          </p>
-
-          {/* Algorithmic Reason */}
-          {doFirstTask.priorityBreakdown?.reasons && doFirstTask.priorityBreakdown.reasons.length > 0 && (
-            <div
-              style={{
-                fontSize: '0.7rem',
-                color: '#cbd5e1',
-                background: 'rgba(0, 0, 0, 0.35)',
-                padding: '0.45rem 0.65rem',
-                borderRadius: '6px',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              <Sparkles size={12} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-              <span>{doFirstTask.priorityBreakdown.reasons[0]}</span>
+        ) : (
+          <div
+            style={{
+              backgroundColor: '#0A0A0A',
+              border: '1px solid #242424',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.75rem 1.25rem',
+              textAlign: 'center'
+            }}
+          >
+            <CheckCircle2 size={32} style={{ color: '#10B981', marginBottom: '0.5rem' }} />
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#F5F5F5', marginBottom: '0.25rem' }}>
+              All Priority Tasks Completed
             </div>
-          )}
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <p style={{ fontSize: '0.75rem', color: '#666666', marginBottom: '1rem' }}>
+              Nothing urgent needs your attention right now.
+            </p>
             <button
-              onClick={() => {
-                toggleTaskComplete(doFirstTask.id);
-                triggerConfetti();
-              }}
-              style={{
-                flex: 1,
-                padding: '0.6rem',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.4rem',
-                cursor: 'pointer'
-              }}
+              onClick={onGoToTasks}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.85rem' }}
             >
-              <CheckCircle2 size={16} />
-              <span>Complete</span>
-            </button>
-
-            <button
-              onClick={() => setIsFocusModeOpen(true)}
-              style={{
-                padding: '0.6rem 0.85rem',
-                borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#ffffff',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                cursor: 'pointer'
-              }}
-            >
-              <Play size={14} style={{ color: 'var(--accent-cyan)' }} />
-              <span>Focus</span>
+              Browse All Tasks
             </button>
           </div>
-        </div>
-      ) : (
-        <div className="card" style={{ textAlign: 'center', padding: '1.5rem', marginBottom: '1.5rem' }}>
-          <CheckCircle2 size={32} style={{ color: 'var(--accent-emerald)', margin: '0 auto 0.5rem' }} />
-          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc' }}>All Caught Up!</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>0 pending high priority tasks</div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Up Next Section */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Up Next Today
+      {/* ================= IMPORTANT NEXT ================= */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#A3A3A3' }}>
+            IMPORTANT NEXT
           </span>
           <button
             onClick={onGoToTasks}
-            style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#6366F1',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.2rem',
+              fontWeight: 600
+            }}
           >
             <span>View All</span>
-            <ArrowRight size={12} />
+            <ChevronRight size={13} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {todaysTasks.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                background: 'rgba(255, 255, 255, 0.025)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.75rem 0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.75rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
-                <button
-                  onClick={() => toggleTaskComplete(t.id)}
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '6px',
-                    border: '1.5px solid rgba(255,255,255,0.2)',
-                    background: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    flexShrink: 0
-                  }}
-                />
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {t.title}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span>{t.category}</span>
-                    <span>•</span>
-                    <span>{formatDuration(t.estimatedDuration)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <span
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {nextTasks.length === 0 ? (
+            <div style={{ padding: '1rem', backgroundColor: '#0A0A0A', border: '1px solid #242424', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: '#666666', textAlign: 'center' }}>
+              No upcoming tasks pending.
+            </div>
+          ) : (
+            nextTasks.map((t) => (
+              <div
+                key={t.id}
+                onClick={() => {
+                  setSelectedTaskId(t.id);
+                  onGoToTasks();
+                }}
                 style={{
-                  fontSize: '0.65rem',
-                  padding: '0.15rem 0.4rem',
-                  borderRadius: '4px',
-                  background: t.priority === 'Critical' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.2)',
-                  color: t.priority === 'Critical' ? '#f87171' : '#818cf8',
-                  fontWeight: 700,
-                  flexShrink: 0
+                  backgroundColor: '#0A0A0A',
+                  border: '1px solid #242424',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.75rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
                 }}
               >
-                {t.priority}
-              </span>
-            </div>
-          ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTaskComplete(t.id);
+                      triggerConfetti();
+                    }}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '4px',
+                      border: '1.5px solid #444444',
+                      background: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#F5F5F5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.title}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#666666', marginTop: '0.1rem' }}>
+                      {t.category}
+                    </div>
+                  </div>
+                </div>
+
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: t.priority === 'Critical' ? '#EF4444' : t.priority === 'High' ? '#F59E0B' : '#666666', marginLeft: '0.5rem' }}>
+                  {t.priority}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Today's Schedule Highlight */}
+      {/* ================= TODAY'S SCHEDULE ================= */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Next Schedule Block
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#A3A3A3' }}>
+            TODAY'S SCHEDULE
           </span>
-          <button
-            onClick={onGoToSchedule}
-            style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
-          >
-            <span>Full Schedule</span>
-            <ArrowRight size={12} />
-          </button>
         </div>
 
         <div
           style={{
-            background: 'rgba(16, 185, 129, 0.05)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem'
+            backgroundColor: '#0A0A0A',
+            border: '1px solid #242424',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1rem'
           }}
         >
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'rgba(16, 185, 129, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent-emerald)'
-            }}
-          >
-            <Calendar size={18} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
-              Co-Founder Sprint & Canvas Sync
+          {nextEvent ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    padding: '0.4rem',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                    color: '#818CF8'
+                  }}
+                >
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F5F5F5' }}>
+                    {nextEvent.title}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#666666', marginTop: '0.1rem' }}>
+                    {nextEvent.startTime} - {nextEvent.endTime} • {nextEvent.type}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-              16:30 - 18:30 (Today) • Vaish & Alex
+          ) : (
+            <div style={{ fontSize: '0.75rem', color: '#666666', textAlign: 'center', padding: '0.5rem 0' }}>
+              No more scheduled events for today. Open for deep work.
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* ================= WHY THIS TASK BOTTOM SHEET MODAL ================= */}
+      {isWhyModalOpen && doFirstTask && (
+        <div className="modal-overlay" onClick={() => setIsWhyModalOpen(false)}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#171717',
+              border: '1px solid #303030',
+              borderRadius: 'var(--radius-xl)',
+              maxWidth: '460px',
+              width: '92vw',
+              padding: '1.5rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F5F5F5' }}>
+                Why This Task Is Recommended
+              </h3>
+              <button onClick={() => setIsWhyModalOpen(false)} className="btn-icon">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                  <span style={{ color: '#A3A3A3' }}>Deadline Urgency (30%)</span>
+                  <span style={{ color: '#F5F5F5', fontWeight: 700 }}>{doFirstTask.priorityBreakdown?.deadlineScore ?? 28} / 30</span>
+                </div>
+                <div style={{ height: '5px', backgroundColor: '#111111', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${((doFirstTask.priorityBreakdown?.deadlineScore ?? 28) / 30) * 100}%`, height: '100%', backgroundColor: '#6366F1' }} />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                  <span style={{ color: '#A3A3A3' }}>Project Impact (20%)</span>
+                  <span style={{ color: '#F5F5F5', fontWeight: 700 }}>{doFirstTask.priorityBreakdown?.impactScore ?? 18} / 20</span>
+                </div>
+                <div style={{ height: '5px', backgroundColor: '#111111', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${((doFirstTask.priorityBreakdown?.impactScore ?? 18) / 20) * 100}%`, height: '100%', backgroundColor: '#6366F1' }} />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                  <span style={{ color: '#A3A3A3' }}>Dependency Unlocking (15%)</span>
+                  <span style={{ color: '#F5F5F5', fontWeight: 700 }}>{doFirstTask.priorityBreakdown?.dependencyScore ?? 14} / 15</span>
+                </div>
+                <div style={{ height: '5px', backgroundColor: '#111111', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${((doFirstTask.priorityBreakdown?.dependencyScore ?? 14) / 15) * 100}%`, height: '100%', backgroundColor: '#6366F1' }} />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                  <span style={{ color: '#A3A3A3' }}>Schedule Fit (10%)</span>
+                  <span style={{ color: '#F5F5F5', fontWeight: 700 }}>{doFirstTask.priorityBreakdown?.scheduleScore ?? 9} / 10</span>
+                </div>
+                <div style={{ height: '5px', backgroundColor: '#111111', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${((doFirstTask.priorityBreakdown?.scheduleScore ?? 9) / 10) * 100}%`, height: '100%', backgroundColor: '#6366F1' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Rationale Text */}
+            <div style={{ padding: '0.75rem', backgroundColor: '#111111', borderRadius: 'var(--radius-md)', border: '1px solid #242424', fontSize: '0.75rem', color: '#A3A3A3', lineHeight: 1.45, marginBottom: '1.25rem' }}>
+              💡 <strong>AI Rationale:</strong> {doFirstTask.priorityBreakdown?.reasons?.join(' • ') || 'Highest weighted deliverable on your critical path. Completing this unlocks next milestones.'}
+            </div>
+
+            <button
+              onClick={() => setIsWhyModalOpen(false)}
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center', fontSize: '0.8rem' }}
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

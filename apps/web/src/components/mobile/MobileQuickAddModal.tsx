@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import {
   X,
-  Zap,
+  Plus,
+  Link,
+  FileText,
+  FlaskConical,
+  Upload,
   Lightbulb,
-  Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  FolderKanban
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -13,45 +17,96 @@ interface MobileQuickAddModalProps {
   onClose: () => void;
 }
 
+type QuickAddType = 'menu' | 'task' | 'resource' | 'document' | 'research' | 'file' | 'idea';
+
 export const MobileQuickAddModal: React.FC<MobileQuickAddModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { createTask, createIdea, projects, currentMember, triggerConfetti } = useApp();
+  const {
+    createTask,
+    createIdea,
+    createResource,
+    createDocument,
+    createResearch,
+    createFile,
+    projects,
+    currentMember,
+    triggerConfetti
+  } = useApp();
 
-  const [mode, setMode] = useState<'task' | 'idea'>('task');
+  const [activeType, setActiveType] = useState<QuickAddType>('menu');
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'Critical' | 'High' | 'Medium' | 'Low'>('High');
-  const [category, setCategory] = useState<'KAVEXA Work' | 'Study' | 'Personal'>('KAVEXA Work');
+  const [url, setUrl] = useState('');
   const [projectId, setProjectId] = useState(projects[0]?.id || '');
-  const [potentialImpact, setPotentialImpact] = useState<'High' | 'Medium' | 'Low'>('High');
+  const [category, setCategory] = useState<'KAVEXA Work' | 'Study' | 'Personal'>('KAVEXA Work');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleReset = () => {
+    setActiveType('menu');
+    setTitle('');
+    setUrl('');
+  };
+
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    if (mode === 'task') {
+    const targetProjId = projectId || (projects[0]?.id ?? 'default_proj');
+
+    if (activeType === 'task') {
       createTask({
         title: title.trim(),
-        description: description.trim(),
+        description: 'Captured via Quick Add.',
         category,
-        priority,
+        priority: 'High',
         impactLevel: 'High',
         difficultyLevel: 'Medium',
         estimatedDuration: 45,
         deadline: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
         assignedMemberId: currentMember.id,
-        projectId: projectId || undefined
+        projectId: targetProjId
       });
-    } else {
+    } else if (activeType === 'resource') {
+      createResource({
+        title: title.trim(),
+        url: url.trim() || 'https://kavexa.io',
+        type: 'General Link',
+        projectId: targetProjId,
+        isPinned: true
+      });
+    } else if (activeType === 'document') {
+      createDocument({
+        title: title.trim(),
+        content: '# ' + title.trim() + '\n\nInitial draft notes.',
+        projectId: targetProjId,
+        authorId: currentMember.id,
+        type: 'PRD'
+      });
+    } else if (activeType === 'research') {
+      createResearch({
+        title: title.trim(),
+        category: 'Technical',
+        summary: 'Investigation notes.',
+        projectId: targetProjId,
+        sourceUrl: url.trim() || undefined
+      });
+    } else if (activeType === 'file') {
+      createFile({
+        fileName: title.trim().endsWith('.pdf') ? title.trim() : title.trim() + '.png',
+        fileType: 'Image',
+        fileUrl: 'https://kavexa.io/assets/' + title.trim(),
+        fileSize: '1.4 MB',
+        projectId: targetProjId,
+        uploadedBy: currentMember.name
+      });
+    } else if (activeType === 'idea') {
       createIdea({
         title: title.trim(),
-        description: description.trim(),
+        description: 'Captured via mobile quick add.',
         category: 'Product Feature',
-        potentialImpact,
+        potentialImpact: 'High',
         notes: '',
         createdBy: currentMember.name,
         tags: ['MobileCapture']
@@ -59,13 +114,19 @@ export const MobileQuickAddModal: React.FC<MobileQuickAddModalProps> = ({
     }
 
     triggerConfetti();
+    handleReset();
     onClose();
-    setTitle('');
-    setDescription('');
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10000 }}>
+    <div
+      className="modal-overlay"
+      onClick={() => {
+        handleReset();
+        onClose();
+      }}
+      style={{ zIndex: 10000 }}
+    >
       <div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
@@ -75,139 +136,264 @@ export const MobileQuickAddModal: React.FC<MobileQuickAddModalProps> = ({
           left: 0,
           right: 0,
           maxWidth: '100%',
-          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+          backgroundColor: '#171717',
+          borderTop: '1px solid #303030',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+          padding: '1.5rem',
           maxHeight: '85vh',
           overflowY: 'auto'
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => setMode('task')}
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '999px',
-                border: mode === 'task' ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.08)',
-                background: mode === 'task' ? 'rgba(99, 102, 241, 0.2)' : 'none',
-                color: mode === 'task' ? '#ffffff' : 'var(--text-muted)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem'
-              }}
-            >
-              <Zap size={14} />
-              <span>Quick Task</span>
-            </button>
-
-            <button
-              onClick={() => setMode('idea')}
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: '999px',
-                border: mode === 'idea' ? '1px solid var(--accent-amber)' : '1px solid rgba(255,255,255,0.08)',
-                background: mode === 'idea' ? 'rgba(245, 158, 11, 0.2)' : 'none',
-                color: mode === 'idea' ? '#fbbf24' : 'var(--text-muted)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem'
-              }}
-            >
-              <Lightbulb size={14} />
-              <span>Startup Idea</span>
-            </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#F5F5F5' }}>
+              {activeType === 'menu' ? 'Quick Add' : `Add ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}`}
+            </h3>
+            <p style={{ fontSize: '0.75rem', color: '#666666' }}>
+              Fast operational capture from anywhere.
+            </p>
           </div>
-
-          <button onClick={onClose} className="btn-icon">
-            <X size={18} />
+          <button
+            onClick={() => {
+              handleReset();
+              onClose();
+            }}
+            className="btn-icon"
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">{mode === 'task' ? 'Deliverable Title' : 'Concept Title'}</label>
-            <input
-              type="text"
-              placeholder={mode === 'task' ? 'e.g. Test Webhook on Staging' : 'e.g. AI Prompt Auto-Debugger'}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="form-input"
-              autoFocus
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Quick Notes / Context</label>
-            <textarea
-              rows={2}
-              placeholder="Brief details..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="form-textarea"
-            />
-          </div>
-
-          {mode === 'task' ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">Priority</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as any)}
-                  className="form-select"
-                >
-                  <option value="Critical">⚡ Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
+        {/* Action Menu */}
+        {activeType === 'menu' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <button
+              onClick={() => setActiveType('task')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1' }}>
+                <Plus size={18} />
               </div>
+              <span>Add Task</span>
+            </button>
 
-              <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
-                  className="form-select"
-                >
-                  <option value="KAVEXA Work">KAVEXA Work</option>
-                  <option value="Study">Study</option>
-                  <option value="Personal">Personal</option>
-                </select>
+            <button
+              onClick={() => setActiveType('resource')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(6, 182, 212, 0.15)', color: '#06B6D4' }}>
+                <Link size={18} />
               </div>
+              <span>Add Resource</span>
+            </button>
+
+            <button
+              onClick={() => setActiveType('document')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                <FileText size={18} />
+              </div>
+              <span>Add Document</span>
+            </button>
+
+            <button
+              onClick={() => setActiveType('research')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B' }}>
+                <FlaskConical size={18} />
+              </div>
+              <span>Add Research</span>
+            </button>
+
+            <button
+              onClick={() => setActiveType('file')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
+                <Upload size={18} />
+              </div>
+              <span>Upload File</span>
+            </button>
+
+            <button
+              onClick={() => setActiveType('idea')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem',
+                backgroundColor: '#111111',
+                border: '1px solid #242424',
+                borderRadius: 'var(--radius-md)',
+                color: '#F5F5F5',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7' }}>
+                <Lightbulb size={18} />
+              </div>
+              <span>Capture Idea</span>
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleCreate}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.7rem', color: '#666666', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.35rem' }}>
+                Title or Deliverable Name
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter title..."
+                autoFocus
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.75rem',
+                  backgroundColor: '#111111',
+                  border: '1px solid #242424',
+                  borderRadius: 'var(--radius-sm)',
+                  color: '#F5F5F5',
+                  fontSize: '0.85rem'
+                }}
+              />
             </div>
-          ) : (
-            <div className="form-group">
-              <label className="form-label">Potential Impact</label>
-              <select
-                value={potentialImpact}
-                onChange={(e) => setPotentialImpact(e.target.value as any)}
-                className="form-select"
+
+            {(activeType === 'resource' || activeType === 'research') && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.7rem', color: '#666666', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.35rem' }}>
+                  External URL / Reference Link
+                </label>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://..."
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem',
+                    backgroundColor: '#111111',
+                    border: '1px solid #242424',
+                    borderRadius: 'var(--radius-sm)',
+                    color: '#F5F5F5',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
+            )}
+
+            {projects.length > 0 && activeType !== 'idea' && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.7rem', color: '#666666', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.35rem' }}>
+                  Target Project
+                </label>
+                <select
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem',
+                    backgroundColor: '#111111',
+                    border: '1px solid #242424',
+                    borderRadius: 'var(--radius-sm)',
+                    color: '#F5F5F5',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setActiveType('menu')}
+                className="btn btn-secondary"
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem' }}
               >
-                <option value="High">High Impact</option>
-                <option value="Medium">Medium Impact</option>
-                <option value="Low">Low Impact</option>
-              </select>
+                Back
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ flex: 2, justifyContent: 'center', fontSize: '0.8rem' }}
+              >
+                Create {activeType.charAt(0).toUpperCase() + activeType.slice(1)}
+              </button>
             </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>
-              <Sparkles size={14} />
-              <span>{mode === 'task' ? 'Score & Create' : 'Log Idea'}</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -3,12 +3,11 @@ import {
   Compass,
   CheckSquare,
   Plus,
-  Calendar,
-  User,
-  Users
+  FolderKanban,
+  User
 } from 'lucide-react';
 
-export type MobileTab = 'today' | 'tasks' | 'schedule' | 'profile';
+export type MobileTab = 'today' | 'tasks' | 'projects' | 'profile';
 
 interface MobileBottomNavProps {
   activeTab: MobileTab;
@@ -31,9 +30,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         left: 0,
         right: 0,
         height: '65px',
-        backgroundColor: 'rgba(8, 11, 17, 0.95)',
+        backgroundColor: 'rgba(10, 10, 10, 0.96)',
         backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        borderTop: '1px solid #242424',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
@@ -51,7 +50,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: '4px',
-          color: activeTab === 'today' ? 'var(--accent-primary)' : 'var(--text-muted)',
+          color: activeTab === 'today' ? '#6366F1' : '#666666',
           cursor: 'pointer',
           padding: '6px 12px'
         }}
@@ -73,7 +72,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           alignItems: 'center',
           gap: '4px',
           position: 'relative',
-          color: activeTab === 'tasks' ? 'var(--accent-cyan)' : 'var(--text-muted)',
+          color: activeTab === 'tasks' ? '#6366F1' : '#666666',
           cursor: 'pointer',
           padding: '6px 12px'
         }}
@@ -88,7 +87,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               width: '14px',
               height: '14px',
               borderRadius: '50%',
-              backgroundColor: 'var(--accent-primary)',
+              backgroundColor: '#6366F1',
               color: '#ffffff',
               fontSize: '0.55rem',
               fontWeight: 800,
@@ -112,7 +111,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           width: '46px',
           height: '46px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+          background: '#6366F1',
           border: 'none',
           color: '#ffffff',
           display: 'flex',
@@ -120,15 +119,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           justifyContent: 'center',
           boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
           cursor: 'pointer',
-          transform: 'translateY(-10px)'
+          transform: 'translateY(-8px)'
         }}
       >
         <Plus size={24} strokeWidth={2.5} />
       </button>
 
-      {/* Schedule */}
+      {/* Projects */}
       <button
-        onClick={() => setActiveTab('schedule')}
+        onClick={() => setActiveTab('projects')}
         style={{
           background: 'none',
           border: 'none',
@@ -136,18 +135,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: '4px',
-          color: activeTab === 'schedule' ? 'var(--accent-emerald)' : 'var(--text-muted)',
+          color: activeTab === 'projects' ? '#6366F1' : '#666666',
           cursor: 'pointer',
           padding: '6px 12px'
         }}
       >
-        <Calendar size={20} />
-        <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'schedule' ? 700 : 500 }}>
-          Schedule
+        <FolderKanban size={20} />
+        <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'projects' ? 700 : 500 }}>
+          Projects
         </span>
       </button>
 
-      {/* Profile & Team */}
+      {/* Profile */}
       <button
         onClick={() => setActiveTab('profile')}
         style={{
@@ -157,14 +156,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: '4px',
-          color: activeTab === 'profile' ? 'var(--accent-amber)' : 'var(--text-muted)',
+          color: activeTab === 'profile' ? '#6366F1' : '#666666',
           cursor: 'pointer',
           padding: '6px 12px'
         }}
       >
-        <Users size={20} />
+        <User size={20} />
         <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'profile' ? 700 : 500 }}>
-          Team
+          Profile
         </span>
       </button>
     </div>

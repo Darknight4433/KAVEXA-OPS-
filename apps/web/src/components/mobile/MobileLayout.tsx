@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { MobileBottomNav, MobileTab } from './MobileBottomNav';
 import { MobileTodayView } from './MobileTodayView';
 import { MobileTasksView } from './MobileTasksView';
-import { MobileScheduleView } from './MobileScheduleView';
+import { MobileProjectsView } from './MobileProjectsView';
 import { MobileProfileTeamView } from './MobileProfileTeamView';
 import { MobileQuickAddModal } from './MobileQuickAddModal';
 import { FocusTimerHUD } from '../layout/FocusTimerHUD';
@@ -19,8 +19,8 @@ export const MobileLayout: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: 'var(--bg-base)',
-        color: 'var(--text-primary)',
+        backgroundColor: '#050505',
+        color: '#F5F5F5',
         fontFamily: 'var(--font-sans)',
         position: 'relative'
       }}
@@ -30,11 +30,11 @@ export const MobileLayout: React.FC = () => {
         {mobileTab === 'today' && (
           <MobileTodayView
             onGoToTasks={() => setMobileTab('tasks')}
-            onGoToSchedule={() => setMobileTab('schedule')}
+            onGoToProjects={() => setMobileTab('projects')}
           />
         )}
         {mobileTab === 'tasks' && <MobileTasksView />}
-        {mobileTab === 'schedule' && <MobileScheduleView />}
+        {mobileTab === 'projects' && <MobileProjectsView />}
         {mobileTab === 'profile' && <MobileProfileTeamView />}
       </main>
 
