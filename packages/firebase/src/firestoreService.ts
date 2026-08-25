@@ -787,6 +787,16 @@ class WorkspaceFirestoreStore {
   }
 
   // --- ACTIONS: MEMBERS & AVAILABILITY ---
+  public updateMember(memberId: string, updates: Partial<TeamMember>): TeamMember {
+    const member = this.members.find((m) => m.id === memberId);
+    if (!member) throw new Error('Member not found');
+    Object.assign(member, updates);
+    this.logActivity(member.id, member.name, `Updated profile & role to "${member.role}"`, 'task', 'Founder Profile');
+    this.recomputeSystemIntelligence();
+    this.saveState();
+    return member;
+  }
+
   public updateMemberAvailability(memberId: string, availability: TeamMember['availability']) {
     const member = this.members.find((m) => m.id === memberId);
     if (member) {

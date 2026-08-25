@@ -26,7 +26,9 @@ export const TeamHub: React.FC = () => {
     updateMemberAvailability,
     createScheduleEvent,
     createMember,
-    deleteMember
+    deleteMember,
+    currentMemberId,
+    setIsUserProfileModalOpen
   } = useApp();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -241,6 +243,29 @@ export const TeamHub: React.FC = () => {
                 </div>
               </div>
 
+              {/* Focus Domain & University */}
+              {(member.focusDomain || member.university) && (
+                <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '0.85rem', fontSize: '0.75rem' }}>
+                  {member.focusDomain && (
+                    <div style={{ color: '#cbd5e1', marginBottom: member.university ? '0.2rem' : 0 }}>
+                      ⚡ <strong>Focus:</strong> {member.focusDomain}
+                    </div>
+                  )}
+                  {member.university && (
+                    <div style={{ color: 'var(--accent-amber)' }}>
+                      🎓 <strong>Academic:</strong> {member.university}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Founder Bio */}
+              {member.bio && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', fontStyle: 'italic' }}>
+                  "{member.bio}"
+                </p>
+              )}
+
               {/* Workload Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', textAlign: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
                 <div>
@@ -265,13 +290,24 @@ export const TeamHub: React.FC = () => {
                 </div>
               </div>
 
-              {/* Skills Tags */}
-              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.85rem' }}>
-                {member.skills.map((skill) => (
-                  <span key={skill} style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.04)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                    {skill}
-                  </span>
-                ))}
+              {/* Skills Tags & Customize Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.85rem' }}>
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {member.skills.map((skill) => (
+                    <span key={skill} style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.04)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+                {member.id === currentMemberId && (
+                  <button
+                    onClick={() => setIsUserProfileModalOpen(true)}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem' }}
+                  >
+                    Edit My Profile & Theme
+                  </button>
+                )}
               </div>
             </div>
           );

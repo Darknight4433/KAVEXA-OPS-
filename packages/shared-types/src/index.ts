@@ -270,6 +270,10 @@ export interface TeamMember {
   completedTasksCount: number;
   skills: string[];
   todayFreeSlots: { start: string; end: string }[];
+  themePreference?: string;
+  bio?: string;
+  focusDomain?: string;
+  university?: string;
 }
 
 export type EventType = 'School' | 'Study' | 'KAVEXA Work' | 'Meeting' | 'Deadline' | 'Personal';

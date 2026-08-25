@@ -46,6 +46,82 @@
   --topbar-height: 64px;
 }
 
+/* Theme Variations */
+[data-theme="emerald"] {
+  --bg-app: #040d0a;
+  --bg-sidebar: #061410;
+  --bg-topbar: rgba(6, 20, 16, 0.85);
+  --bg-card: rgba(8, 28, 22, 0.75);
+  --bg-card-hover: rgba(12, 40, 32, 0.85);
+  --bg-elevated: #0f3529;
+  --bg-input: rgba(6, 20, 16, 0.9);
+  --accent-primary: #10b981;
+  --accent-primary-hover: #059669;
+  --accent-cyan: #34d399;
+  --border-focus: #10b981;
+  --border-glow: rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="amber"] {
+  --bg-app: #0e0a05;
+  --bg-sidebar: #150f08;
+  --bg-topbar: rgba(21, 15, 8, 0.85);
+  --bg-card: rgba(30, 20, 12, 0.75);
+  --bg-card-hover: rgba(45, 30, 18, 0.85);
+  --bg-elevated: #3b2818;
+  --bg-input: rgba(21, 15, 8, 0.9);
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #d97706;
+  --accent-cyan: #fbbf24;
+  --border-focus: #f59e0b;
+  --border-glow: rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="violet"] {
+  --bg-app: #0b0714;
+  --bg-sidebar: #100a1f;
+  --bg-topbar: rgba(16, 10, 31, 0.85);
+  --bg-card: rgba(25, 16, 48, 0.75);
+  --bg-card-hover: rgba(36, 23, 70, 0.85);
+  --bg-elevated: #311c60;
+  --bg-input: rgba(16, 10, 31, 0.9);
+  --accent-primary: #8b5cf6;
+  --accent-primary-hover: #7c3aed;
+  --accent-cyan: #c084fc;
+  --border-focus: #8b5cf6;
+  --border-glow: rgba(139, 92, 246, 0.35);
+}
+
+[data-theme="arctic"] {
+  --bg-app: #060e18;
+  --bg-sidebar: #091524;
+  --bg-topbar: rgba(9, 21, 36, 0.85);
+  --bg-card: rgba(13, 30, 52, 0.75);
+  --bg-card-hover: rgba(18, 42, 72, 0.85);
+  --bg-elevated: #163660;
+  --bg-input: rgba(9, 21, 36, 0.9);
+  --accent-primary: #0284c7;
+  --accent-primary-hover: #0369a1;
+  --accent-cyan: #38bdf8;
+  --border-focus: #38bdf8;
+  --border-glow: rgba(56, 189, 248, 0.35);
+}
+
+[data-theme="crimson"] {
+  --bg-app: #0f0507;
+  --bg-sidebar: #17080b;
+  --bg-topbar: rgba(23, 8, 11, 0.85);
+  --bg-card: rgba(35, 12, 17, 0.75);
+  --bg-card-hover: rgba(52, 18, 25, 0.85);
+  --bg-elevated: #441620;
+  --bg-input: rgba(23, 8, 11, 0.9);
+  --accent-primary: #e11d48;
+  --accent-primary-hover: #be123c;
+  --accent-cyan: #fb7185;
+  --border-focus: #e11d48;
+  --border-glow: rgba(225, 29, 72, 0.35);
+}
+
 * {
   margin: 0;
   padding: 0;

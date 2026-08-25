@@ -134,6 +134,9 @@ interface AppContextType {
   authUser: any;
   loginWithGoogle: () => Promise<void>;
   logoutGoogle: () => Promise<void>;
+  isUserProfileModalOpen: boolean;
+  setIsUserProfileModalOpen: (open: boolean) => void;
+  updateMember: (memberId: string, updates: Partial<TeamMember>) => TeamMember;
   createMember: (member: Partial<TeamMember>) => TeamMember;
   deleteMember: (memberId: string) => void;
   updateMemberAvailability: (memberId: string, availability: TeamMember['availability']) => void;
@@ -205,6 +208,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setFiles(workspaceFirestore.getFiles());
   };
 
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
+
   const [authUser, setAuthUser] = useState<any>(null);
 
   const loginWithGoogle = async () => {
@@ -214,6 +219,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (user) {
         setAuthUser(user);
         workspaceFirestore.syncGoogleUser(user);
+        setIsUserProfileModalOpen(true);
       }
     } catch (e: any) {
       console.error('Google login error:', e);
@@ -401,6 +407,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authUser,
         loginWithGoogle,
         logoutGoogle,
+        isUserProfileModalOpen,
+        setIsUserProfileModalOpen,
+        updateMember: (memberId, updates) => workspaceFirestore.updateMember(memberId, updates),
         createMember: (member) => workspaceFirestore.createMember(member),
         deleteMember: (memberId) => workspaceFirestore.deleteMember(memberId),
         updateMemberAvailability: (memberId, availability) =>

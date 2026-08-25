@@ -18,10 +18,21 @@ interface MobileTask {
   completed: boolean;
 }
 
+interface MobileStudyTask {
+  id: string;
+  title: string;
+  subject: string;
+  type: string;
+  completed: boolean;
+}
+
 export default function MobileApp() {
-  const [activeTab, setActiveTab] = useState<'today' | 'tasks' | 'schedule' | 'team'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'tasks' | 'study' | 'schedule' | 'team'>('today');
   const [tasks, setTasks] = useState<MobileTask[]>([]);
+  const [studyTasks, setStudyTasks] = useState<MobileStudyTask[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newStudyTitle, setNewStudyTitle] = useState('');
+  const [newStudySubject, setNewStudySubject] = useState('Operating Systems');
   const [userStatus, setUserStatus] = useState<'Available' | 'Busy' | 'Studying' | 'Offline'>('Available');
 
   const handleAddTask = () => {
@@ -37,8 +48,33 @@ export default function MobileApp() {
     setNewTaskTitle('');
   };
 
+  const handleAddStudyTask = () => {
+    if (!newStudyTitle.trim()) return;
+    const newTask: MobileStudyTask = {
+      id: 'study_' + Date.now(),
+      title: newStudyTitle.trim(),
+      subject: newStudySubject,
+      type: 'Homework',
+      completed: false
+    };
+    setStudyTasks([newTask, ...studyTasks]);
+    setNewStudyTitle('');
+  };
+
   const toggleTask = (id: string) => {
     setTasks(tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  };
+
+  const toggleStudyTask = (id: string) => {
+    setStudyTasks(studyTasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
+
+  const deleteStudyTask = (id: string) => {
+    setStudyTasks(studyTasks.filter((t) => t.id !== id));
   };
 
   return (
@@ -49,7 +85,7 @@ export default function MobileApp() {
       <View style={styles.header}>
         <View>
           <Text style={styles.brandTitle}>KAVEXA OPS</Text>
-          <Text style={styles.greeting}>Founder Operations & Focus</Text>
+          <Text style={styles.greeting}>Operations & Academic System</Text>
         </View>
         <View style={styles.statusBadge}>
           <Text style={styles.statusText}>{userStatus}</Text>
@@ -89,7 +125,7 @@ export default function MobileApp() {
 
             {/* Quick Add Task Input */}
             <View style={styles.card}>
-              <Text style={styles.sectionHeader}>Quick Add Task</Text>
+              <Text style={styles.sectionHeader}>Quick Add Startup Task</Text>
               <View style={styles.inputRow}>
                 <TextInput
                   placeholder="Enter task name..."
@@ -108,25 +144,78 @@ export default function MobileApp() {
 
         {activeTab === 'tasks' && (
           <View>
-            <Text style={styles.sectionHeader}>Active Tasks ({tasks.length})</Text>
+            <Text style={styles.sectionHeader}>Active Startup Tasks ({tasks.length})</Text>
             {tasks.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No tasks yet. Create one in Today tab!</Text>
+                <Text style={styles.emptyText}>No tasks yet. Create one above!</Text>
               </View>
             ) : (
               tasks.map((task) => (
-                <TouchableOpacity
-                  key={task.id}
-                  onPress={() => toggleTask(task.id)}
-                  style={styles.taskRow}
-                >
-                  <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-                    {task.completed && <Text style={styles.checkMark}>✓</Text>}
-                  </View>
-                  <Text style={[styles.taskRowText, task.completed && styles.taskDoneText]}>
-                    {task.title}
-                  </Text>
+                <View key={task.id} style={styles.taskRow}>
+                  <TouchableOpacity
+                    onPress={() => toggleTask(task.id)}
+                    style={styles.taskRowLeft}
+                  >
+                    <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
+                      {task.completed && <Text style={styles.checkMark}>✓</Text>}
+                    </View>
+                    <Text style={[styles.taskRowText, task.completed && styles.taskDoneText]}>
+                      {task.title}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteTask(task.id)} style={styles.deleteBtn}>
+                    <Text style={styles.deleteBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        {activeTab === 'study' && (
+          <View>
+            <Text style={styles.sectionHeader}>Personal Study & Homework ({studyTasks.length})</Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionHeader}>Add Course Homework</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  placeholder="e.g. Lab 3, Chapter 4..."
+                  placeholderTextColor="#64748b"
+                  value={newStudyTitle}
+                  onChangeText={setNewStudyTitle}
+                  style={styles.textInput}
+                />
+                <TouchableOpacity onPress={handleAddStudyTask} style={styles.addBtnStudy}>
+                  <Text style={styles.addBtnText}>+ Add</Text>
                 </TouchableOpacity>
+              </View>
+            </View>
+
+            {studyTasks.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>No coursework tasks added yet.</Text>
+              </View>
+            ) : (
+              studyTasks.map((task) => (
+                <View key={task.id} style={styles.taskRow}>
+                  <TouchableOpacity
+                    onPress={() => toggleStudyTask(task.id)}
+                    style={styles.taskRowLeft}
+                  >
+                    <View style={[styles.checkboxStudy, task.completed && styles.checkboxDone]}>
+                      {task.completed && <Text style={styles.checkMark}>✓</Text>}
+                    </View>
+                    <View>
+                      <Text style={[styles.taskRowText, task.completed && styles.taskDoneText]}>
+                        {task.title}
+                      </Text>
+                      <Text style={styles.studySubtitle}>{task.subject} • Homework</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteStudyTask(task.id)} style={styles.deleteBtn}>
+                    <Text style={styles.deleteBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
               ))
             )}
           </View>
@@ -185,6 +274,12 @@ export default function MobileApp() {
           style={[styles.tabItem, activeTab === 'tasks' && styles.activeTab]}
         >
           <Text style={[styles.tabText, activeTab === 'tasks' && styles.activeTabText]}>Tasks</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('study')}
+          style={[styles.tabItem, activeTab === 'study' && styles.activeTab]}
+        >
+          <Text style={[styles.tabText, activeTab === 'study' && styles.activeTabText]}>Study</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab('schedule')}
@@ -328,6 +423,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 8
   },
+  addBtnStudy: {
+    backgroundColor: '#06b6d4',
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRadius: 8
+  },
   addBtnText: {
     color: '#ffffff',
     fontWeight: 'bold'
@@ -335,6 +436,7 @@ const styles = StyleSheet.create({
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#0f172a',
     padding: 12,
     borderRadius: 8,
@@ -342,13 +444,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b'
   },
+  taskRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
+  },
   checkbox: {
     width: 20,
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#6366f1',
-    marginRight: 10,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  checkboxStudy: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#06b6d4',
+    marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -364,16 +481,30 @@ const styles = StyleSheet.create({
   taskRowText: {
     color: '#f8fafc',
     fontSize: 14,
-    flex: 1
+    fontWeight: '500'
+  },
+  studySubtitle: {
+    color: '#94a3b8',
+    fontSize: 11,
+    marginTop: 2
   },
   taskDoneText: {
     textDecorationLine: 'line-through',
     color: '#64748b'
   },
+  deleteBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4
+  },
+  deleteBtnText: {
+    color: '#f43f5e',
+    fontSize: 14,
+    fontWeight: 'bold'
+  },
   emptyCard: {
     padding: 24,
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#1e293b'
@@ -384,18 +515,21 @@ const styles = StyleSheet.create({
   },
   statusRow: {
     flexDirection: 'row',
-    gap: 6,
     flexWrap: 'wrap',
-    marginTop: 8
+    gap: 8,
+    marginTop: 10
   },
   statusOption: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: '#334155'
   },
   statusOptionActive: {
-    backgroundColor: '#6366f1'
+    backgroundColor: '#6366f1',
+    borderColor: '#6366f1'
   },
   statusOptionText: {
     color: '#94a3b8',
@@ -406,18 +540,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   syncBanner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-    borderRadius: 8,
+    marginVertical: 20,
     padding: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24
+    borderRadius: 8,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    alignItems: 'center'
   },
   syncText: {
-    color: '#10b981',
-    fontSize: 12
+    color: '#818cf8',
+    fontSize: 12,
+    fontWeight: '600'
   },
   tabBar: {
     flexDirection: 'row',
@@ -428,8 +562,7 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 4
+    alignItems: 'center'
   },
   activeTab: {
     borderTopWidth: 2,
@@ -441,6 +574,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#6366f1',
-    fontWeight: '600'
+    fontWeight: 'bold'
   }
 });

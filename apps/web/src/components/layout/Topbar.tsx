@@ -13,9 +13,12 @@ import {
   Calendar,
   GraduationCap,
   Lightbulb,
+  Palette,
+  Sliders,
   X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { UserProfileModal } from '../modals/UserProfileModal';
 
 export const Topbar: React.FC = () => {
   const {
@@ -37,7 +40,9 @@ export const Topbar: React.FC = () => {
     updateMemberAvailability,
     authUser,
     loginWithGoogle,
-    logoutGoogle
+    logoutGoogle,
+    isUserProfileModalOpen,
+    setIsUserProfileModalOpen
   } = useApp();
 
   const [timeStr, setTimeStr] = useState<string>('');
@@ -358,6 +363,18 @@ export const Topbar: React.FC = () => {
                   ))}
                 </div>
 
+                <button
+                  onClick={() => {
+                    setIsUserProfileModalOpen(true);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', fontSize: '0.75rem', justifyContent: 'center', marginBottom: '0.65rem', gap: '0.4rem', border: '1px solid rgba(6, 182, 212, 0.3)' }}
+                >
+                  <Sliders size={13} style={{ color: 'var(--accent-cyan)' }} />
+                  <span>Personalize Role & Theme</span>
+                </button>
+
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.65rem' }}>
                   {authUser ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.2rem 0' }}>
@@ -416,6 +433,11 @@ export const Topbar: React.FC = () => {
           )}
         </div>
       </div>
+
+      <UserProfileModal
+        isOpen={isUserProfileModalOpen}
+        onClose={() => setIsUserProfileModalOpen(false)}
+      />
     </header>
   );
 };
