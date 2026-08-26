@@ -156,7 +156,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [currentMemberId, setCurrentMemberId] = useState<string>('member_vaish');
+  const [currentMemberId, setCurrentMemberId] = useState<string>('');
 
   // Search & Modals
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -228,6 +228,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const user = await signInWithGoogle();
       if (user) {
         setAuthUser(user);
+        setCurrentMemberId(user.uid);
         workspaceFirestore.syncGoogleUser(user);
         setIsUserProfileModalOpen(true);
       }
@@ -247,6 +248,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { signOutUser } = await import('@kavexa/firebase');
       await signOutUser();
       setAuthUser(null);
+      setCurrentMemberId('');
     } catch (e: any) {
       console.error('Google sign out error:', e);
     }
@@ -264,6 +266,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       unsubscribeAuth = subscribeToAuthChanges((user) => {
         setAuthUser(user);
         if (user) {
+          setCurrentMemberId(user.uid);
           workspaceFirestore.syncGoogleUser(user);
         }
       });
@@ -275,6 +278,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       unsubscribeElectron = (window as any).electronAPI.onAuthSuccess((user: any) => {
         if (user) {
           setAuthUser(user);
+          setCurrentMemberId(user.uid);
           workspaceFirestore.syncGoogleUser(user);
           setIsUserProfileModalOpen(true);
         }
@@ -311,7 +315,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const currentMember: TeamMember = authUser
     ? {
         id: authUser.uid,
-        name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
+        name: authUser.displayName || authUser.email?.split('@')[0] || 'Team Member',
         role: members.find((m) => m.id === authUser.uid)?.role || 'Founder',
         email: authUser.email || '',
         avatarUrl: authUser.photoURL || '/app-icon.png',
@@ -319,10 +323,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         weeklyWorkloadHours: 0,
         assignedTasksCount: 0,
         completedTasksCount: 0,
-        skills: members.find((m) => m.id === authUser.uid)?.skills || [],
+        skills: members.find((m) => m.id === authUser.uid)?.skills || ['Operations'],
         todayFreeSlots: []
       }
-    : (members.find((m) => m.id === currentMemberId) || {
+    : (currentMemberId ? members.find((m) => m.id === currentMemberId) : null) || {
         id: 'guest',
         name: 'Not Signed In',
         role: 'Sign in to access workspace',
@@ -334,7 +338,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         completedTasksCount: 0,
         skills: [],
         todayFreeSlots: []
-      });
+      };
 
   return (
     <AppContext.Provider

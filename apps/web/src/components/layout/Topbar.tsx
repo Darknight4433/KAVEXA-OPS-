@@ -16,11 +16,10 @@ import {
   Palette,
   Sliders,
   Code,
+  User,
   X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { UserProfileModal } from '../modals/UserProfileModal';
-import { VSCodeTrackerModal } from '../modules/Analytics/VSCodeTrackerModal';
 
 export const Topbar: React.FC = () => {
   const {
@@ -303,21 +302,35 @@ export const Topbar: React.FC = () => {
 
         {/* Co-Founder Profile Switcher */}
         <div style={{ position: 'relative' }}>
-          <div
-            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            className="user-switcher"
-          >
-            <img
-              src={currentMember.avatarUrl || '/app-icon.png'}
-              alt={currentMember.name}
-              className="user-avatar-small"
-            />
-            <span className="user-name-label">{currentMember.name}</span>
-            <span className={`availability-pill avail-${currentMember.availability}`}>
-              {currentMember.availability}
-            </span>
-            <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
-          </div>
+          {currentMember.id === 'guest' ? (
+            <div
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="user-switcher"
+              style={{ borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.08)' }}
+            >
+              <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <User size={13} style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <span className="user-name-label" style={{ color: '#818cf8', fontWeight: 700 }}>Sign In</span>
+              <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+            </div>
+          ) : (
+            <div
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="user-switcher"
+            >
+              <img
+                src={currentMember.avatarUrl || '/app-icon.png'}
+                alt={currentMember.name}
+                className="user-avatar-small"
+              />
+              <span className="user-name-label">{currentMember.name}</span>
+              <span className={`availability-pill avail-${currentMember.availability}`}>
+                {currentMember.availability}
+              </span>
+              <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+            </div>
+          )}
 
           {isProfileMenuOpen && (
             <div
@@ -456,16 +469,6 @@ export const Topbar: React.FC = () => {
           )}
         </div>
       </div>
-
-      <UserProfileModal
-        isOpen={isUserProfileModalOpen}
-        onClose={() => setIsUserProfileModalOpen(false)}
-      />
-
-      <VSCodeTrackerModal
-        isOpen={isVSCodeTrackerOpen}
-        onClose={() => setIsVSCodeTrackerOpen(false)}
-      />
     </header>
   );
 };

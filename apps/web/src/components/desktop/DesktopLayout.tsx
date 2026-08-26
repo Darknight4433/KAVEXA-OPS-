@@ -23,9 +23,17 @@ import { ResourceModal } from '../modals/ResourceModal';
 import { FileUploadModal } from '../modals/FileUploadModal';
 import { IdeaModal } from '../modals/IdeaModal';
 import { ConfigSettingsModal } from '../modals/ConfigSettingsModal';
+import { UserProfileModal } from '../modals/UserProfileModal';
+import { VSCodeTrackerModal } from '../modules/Analytics/VSCodeTrackerModal';
 
 export const DesktopLayout: React.FC = () => {
-  const { activeTab } = useApp();
+  const {
+    activeTab,
+    isUserProfileModalOpen,
+    setIsUserProfileModalOpen,
+    isVSCodeTrackerOpen,
+    setIsVSCodeTrackerOpen
+  } = useApp();
 
   return (
     <div className="app-container">
@@ -60,6 +68,14 @@ export const DesktopLayout: React.FC = () => {
       <FileUploadModal />
       <IdeaModal />
       <ConfigSettingsModal />
+      <UserProfileModal
+        isOpen={isUserProfileModalOpen}
+        onClose={() => setIsUserProfileModalOpen(false)}
+      />
+      <VSCodeTrackerModal
+        isOpen={isVSCodeTrackerOpen}
+        onClose={() => setIsVSCodeTrackerOpen(false)}
+      />
     </div>
   );
 };
