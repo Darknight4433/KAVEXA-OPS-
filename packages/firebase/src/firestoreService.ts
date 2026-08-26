@@ -186,7 +186,7 @@ class WorkspaceFirestoreStore {
     // Live Cloud Firestore sync
     if (!this.isSyncingFromCloud && db) {
       try {
-        const payload = {
+        const rawPayload = {
           projects: this.projects,
           tasks: this.tasks,
           members: this.members,
@@ -203,12 +203,18 @@ class WorkspaceFirestoreStore {
           files: this.files,
           lastUpdated: new Date().toISOString()
         };
+        // Firestore rejects undefined fields; JSON stringify/parse strips all undefined values
+        const sanitizedPayload = JSON.parse(JSON.stringify(rawPayload));
         const workspaceDocRef = doc(db, 'workspaces', this.firestoreDocName);
-        setDoc(workspaceDocRef, payload, { merge: true }).catch((err) => {
-          console.warn('Cloud sync write notice (verify Firestore security rules in Firebase Console):', err);
-        });
+        setDoc(workspaceDocRef, sanitizedPayload, { merge: true })
+          .then(() => {
+            console.log('[Firestore] Successfully synced workspace state to cloud.');
+          })
+          .catch((err) => {
+            console.warn('[Firestore] Cloud sync write notice:', err);
+          });
       } catch (err) {
-        console.warn('Cloud sync error:', err);
+        console.warn('[Firestore] Cloud sync error:', err);
       }
     }
 
