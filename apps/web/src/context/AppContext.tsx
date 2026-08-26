@@ -13,7 +13,8 @@ import {
   ProjectDiagram,
   ProjectResearch,
   ProjectResource,
-  ProjectFile
+  ProjectFile,
+  WorkspaceNotice
 } from '@kavexa/shared-types';
 import { workspaceFirestore } from '@kavexa/firebase';
 import confetti from 'canvas-confetti';
@@ -59,6 +60,8 @@ interface AppContextType {
   setIsNewTaskModalOpen: (open: boolean) => void;
   isNewProjectModalOpen: boolean;
   setIsNewProjectModalOpen: (open: boolean) => void;
+  isNewNoticeModalOpen: boolean;
+  setIsNewNoticeModalOpen: (open: boolean) => void;
   isNewDocModalOpen: boolean;
   setIsNewDocModalOpen: (open: boolean) => void;
   isNewDiagramModalOpen: boolean;
@@ -91,12 +94,17 @@ interface AppContextType {
   research: ProjectResearch[];
   resources: ProjectResource[];
   files: ProjectFile[];
+  notices: WorkspaceNotice[];
 
   // Mutations
   createTask: (task: Partial<Task>) => Task;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   toggleTaskComplete: (taskId: string) => void;
+
+  createNotice: (notice: Partial<WorkspaceNotice>) => WorkspaceNotice;
+  deleteNotice: (noticeId: string) => void;
+  togglePinNotice: (noticeId: string) => void;
 
   createProject: (project: Partial<Project>) => Project;
   updateProject: (projectId: string, updates: Partial<Project>) => void;
@@ -168,6 +176,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Specific Action Modals
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState<boolean>(false);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState<boolean>(false);
+  const [isNewNoticeModalOpen, setIsNewNoticeModalOpen] = useState<boolean>(false);
   const [isNewDocModalOpen, setIsNewDocModalOpen] = useState<boolean>(false);
   const [isNewDiagramModalOpen, setIsNewDiagramModalOpen] = useState<boolean>(false);
   const [isNewResearchModalOpen, setIsNewResearchModalOpen] = useState<boolean>(false);
@@ -192,6 +201,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [research, setResearch] = useState<ProjectResearch[]>([]);
   const [resources, setResources] = useState<ProjectResource[]>([]);
   const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [notices, setNotices] = useState<WorkspaceNotice[]>([]);
 
   const syncStateFromStore = () => {
     setProjects(workspaceFirestore.getProjects());
@@ -208,6 +218,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setResearch(workspaceFirestore.getResearch());
     setResources(workspaceFirestore.getResources());
     setFiles(workspaceFirestore.getFiles());
+    setNotices(workspaceFirestore.getNotices());
   };
 
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
@@ -367,6 +378,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsNewTaskModalOpen,
         isNewProjectModalOpen,
         setIsNewProjectModalOpen,
+        isNewNoticeModalOpen,
+        setIsNewNoticeModalOpen,
         isNewDocModalOpen,
         setIsNewDocModalOpen,
         isNewDiagramModalOpen,
@@ -398,6 +411,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         research,
         resources,
         files,
+        notices,
 
         createTask: (task) => workspaceFirestore.createTask(task),
         updateTask: (taskId, updates) => workspaceFirestore.updateTask(taskId, updates),
@@ -406,6 +420,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           workspaceFirestore.toggleTaskComplete(taskId);
           triggerConfetti();
         },
+
+        createNotice: (notice) => workspaceFirestore.createNotice(notice, currentMember.name),
+        deleteNotice: (noticeId) => workspaceFirestore.deleteNotice(noticeId),
+        togglePinNotice: (noticeId) => workspaceFirestore.togglePinNotice(noticeId),
 
         createProject: (project) => workspaceFirestore.createProject(project),
         updateProject: (projectId, updates) => workspaceFirestore.updateProject(projectId, updates),

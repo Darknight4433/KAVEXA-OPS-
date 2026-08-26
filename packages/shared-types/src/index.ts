@@ -345,7 +345,7 @@ export interface Idea {
   tags: string[];
 }
 
-export type NotificationType = 'deadline' | 'blocked_task' | 'unblocked_task' | 'task_assigned' | 'schedule_conflict' | 'team_sync';
+export type NotificationType = 'deadline' | 'blocked_task' | 'unblocked_task' | 'task_assigned' | 'schedule_conflict' | 'team_sync' | 'team_notice' | 'vc_meeting';
 
 export interface Notification {
   id: string;
@@ -355,8 +355,28 @@ export interface Notification {
   urgency: 'high' | 'medium' | 'low';
   read: boolean;
   createdAt: string;
+  expiresAt?: string;          // Auto-disappears after allotted time
   actionPath?: string;
+  meetingLink?: string;
   entityId?: string;
+}
+
+export type NoticeType = 'Voice / Video Call (VC)' | 'Team Meeting' | 'General Notice' | 'Urgent Alert' | 'Sprint Kickoff';
+
+export interface WorkspaceNotice {
+  id: string;
+  title: string;
+  message: string;
+  type: NoticeType;
+  postedBy: string;
+  postedByAvatar?: string;
+  createdAt: string;
+  date: string;                // YYYY-MM-DD
+  startTime?: string;          // HH:MM
+  endTime?: string;            // HH:MM
+  expiresAt?: string;          // ISO string - notice automatically disappears after allotted time
+  meetingLink?: string;        // Google Meet, Zoom, Jitsi, Discord link
+  isPinned?: boolean;
 }
 
 export interface ActivityLog {
@@ -364,7 +384,7 @@ export interface ActivityLog {
   actorId: string;
   actorName: string;
   action: string;
-  targetType: 'task' | 'project' | 'study' | 'idea' | 'schedule';
+  targetType: 'task' | 'project' | 'study' | 'idea' | 'schedule' | 'notice';
   targetTitle: string;
   timestamp: string;
 }

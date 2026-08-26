@@ -12,8 +12,12 @@ import {
   TrendingUp,
   ShieldAlert,
   Sparkles,
-  Link as LinkIcon,
-  Play
+  Play,
+  Radio,
+  Video,
+  Pin,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { getDoFirstTask, calculateTeamSync } from '@kavexa/intelligence';
@@ -27,12 +31,16 @@ export const CommandCenter: React.FC = () => {
     members,
     schedules,
     studyTasks,
+    notices,
+    deleteNotice,
+    togglePinNotice,
     setSelectedProjectId,
     setSelectedTaskId,
     setActiveTab,
     toggleTaskComplete,
     setIsNewTaskModalOpen,
     setIsNewProjectModalOpen,
+    setIsNewNoticeModalOpen,
     setIsFocusModeOpen
   } = useApp();
 
@@ -123,11 +131,18 @@ export const CommandCenter: React.FC = () => {
         {/* Quick Actions */}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
+            onClick={() => setIsNewNoticeModalOpen(true)}
+            className="btn btn-secondary"
+          >
+            <Video size={15} style={{ color: '#818cf8' }} />
+            <span>+ Schedule VC / Notice</span>
+          </button>
+          <button
             onClick={() => setIsFocusModeOpen(true)}
             className="btn btn-secondary"
           >
             <Play size={15} style={{ color: 'var(--accent-cyan)' }} />
-            <span>Start Deep Work</span>
+            <span>Deep Work</span>
           </button>
           <button
             onClick={() => setIsNewTaskModalOpen(true)}
@@ -137,6 +152,167 @@ export const CommandCenter: React.FC = () => {
             <span>Add Task</span>
           </button>
         </div>
+      </div>
+
+      {/* Team Notices & Scheduled VC Meetings */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Radio size={18} style={{ color: '#818cf8' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#f8fafc' }}>
+              Broadcasts & Scheduled VC Calls
+            </span>
+            <span className="nav-badge" style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8' }}>
+              {notices.length} Active
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsNewNoticeModalOpen(true)}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem' }}
+          >
+            <Video size={13} style={{ color: '#818cf8' }} />
+            <span>+ Schedule VC / Post Notice</span>
+          </button>
+        </div>
+
+        {notices.length === 0 ? (
+          <div
+            className="card"
+            style={{
+              padding: '1.25rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.015)',
+              border: '1px dashed var(--border-subtle)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8' }}>
+                <Radio size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc' }}>No Active Broadcasts or Meetings</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Need to arrange a team VC call or broadcast an announcement? Post a notice for all co-founders.</div>
+              </div>
+            </div>
+            <button onClick={() => setIsNewNoticeModalOpen(true)} className="btn btn-secondary" style={{ fontSize: '0.75rem' }}>
+              + Schedule Call / Notice
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: notices.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.85rem' }}>
+            {notices.map((n) => {
+              const isVC = n.type === 'Voice / Video Call (VC)';
+              return (
+                <div
+                  key={n.id}
+                  className="card"
+                  style={{
+                    padding: '1rem 1.25rem',
+                    background: isVC
+                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(15, 23, 42, 0.8))'
+                      : n.type === 'Urgent Alert'
+                      ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.8))'
+                      : 'rgba(15, 23, 42, 0.65)',
+                    border: isVC
+                      ? '1px solid rgba(99, 102, 241, 0.35)'
+                      : n.type === 'Urgent Alert'
+                      ? '1px solid rgba(239, 68, 68, 0.35)'
+                      : '1px solid var(--border-subtle)',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '4px',
+                          background: isVC ? 'rgba(99, 102, 241, 0.2)' : n.type === 'Urgent Alert' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(6, 182, 212, 0.15)',
+                          color: isVC ? '#818cf8' : n.type === 'Urgent Alert' ? '#ef4444' : 'var(--accent-cyan)'
+                        }}
+                      >
+                        {isVC ? '📞 VC Meeting' : n.type}
+                      </span>
+                      {n.startTime && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                          ⏰ {n.startTime} {n.endTime ? `- ${n.endTime}` : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        onClick={() => togglePinNotice(n.id)}
+                        className="btn-icon"
+                        style={{ width: '22px', height: '22px' }}
+                        title={n.isPinned ? 'Unpin notice' : 'Pin notice'}
+                      >
+                        <Pin size={12} style={{ color: n.isPinned ? 'var(--accent-amber)' : 'var(--text-muted)' }} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove notice "${n.title}"?`)) {
+                            deleteNotice(n.id);
+                          }
+                        }}
+                        className="btn-icon"
+                        style={{ width: '22px', height: '22px' }}
+                        title="Delete notice"
+                      >
+                        <Trash2 size={12} style={{ color: 'var(--accent-rose)' }} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.35rem' }}>
+                    {n.title}
+                  </h3>
+
+                  {n.message && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '0.75rem' }}>
+                      {n.message}
+                    </p>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      <span>👤 {n.postedBy}</span>
+                      <span>•</span>
+                      <span>📅 {n.date}</span>
+                    </div>
+
+                    {n.meetingLink && (
+                      <a
+                        href={n.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.75rem',
+                          background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <Video size={13} />
+                        <span>Join VC Meeting ➔</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Top 4 KPI Metrics */}

@@ -12,7 +12,8 @@ import {
   ProjectDiagram,
   ProjectResearch,
   ProjectResource,
-  ProjectFile
+  ProjectFile,
+  WorkspaceNotice
 } from '@kavexa/shared-types';
 import {
   SEED_PROJECTS,
@@ -57,6 +58,7 @@ class WorkspaceFirestoreStore {
   private research: ProjectResearch[] = [];
   private resources: ProjectResource[] = [];
   private files: ProjectFile[] = [];
+  private notices: WorkspaceNotice[] = [];
 
   private listeners: Set<Listener> = new Set();
   private storageKey = 'kavexa_ops_workspace_v3_clean';
@@ -100,6 +102,7 @@ class WorkspaceFirestoreStore {
                 if (Array.isArray(data.research)) this.research = data.research;
                 if (Array.isArray(data.resources)) this.resources = data.resources;
                 if (Array.isArray(data.files)) this.files = data.files;
+                if (Array.isArray(data.notices)) this.notices = data.notices;
 
                 this.recomputeSystemIntelligence();
                 this.saveToLocalCache();
@@ -171,7 +174,8 @@ class WorkspaceFirestoreStore {
           diagrams: this.diagrams,
           research: this.research,
           resources: this.resources,
-          files: this.files
+          files: this.files,
+          notices: this.notices
         };
         window.localStorage.setItem(this.storageKey, JSON.stringify(payload));
       }
@@ -201,6 +205,7 @@ class WorkspaceFirestoreStore {
           research: this.research,
           resources: this.resources,
           files: this.files,
+          notices: this.notices,
           lastUpdated: new Date().toISOString()
         };
         // Firestore rejects undefined fields; JSON stringify/parse strips all undefined values
@@ -306,7 +311,22 @@ class WorkspaceFirestoreStore {
   public getSubjects(): StudySubject[] { return [...this.subjects]; }
   public getStudyTasks(): StudyTask[] { return [...this.studyTasks]; }
   public getIdeas(): Idea[] { return [...this.ideas]; }
-  public getNotifications(): Notification[] { return [...this.notifications]; }
+  public getNotifications(): Notification[] {
+    const now = new Date().getTime();
+    return this.notifications.filter((n) => {
+      if (!n.expiresAt) return true;
+      const exp = new Date(n.expiresAt).getTime();
+      return isNaN(exp) || exp > now;
+    });
+  }
+  public getNotices(): WorkspaceNotice[] {
+    const now = new Date().getTime();
+    return this.notices.filter((n) => {
+      if (!n.expiresAt) return true;
+      const exp = new Date(n.expiresAt).getTime();
+      return isNaN(exp) || exp > now;
+    });
+  }
   public getActivityLogs(): ActivityLog[] { return [...this.activityLogs]; }
   public getDocuments(projectId?: string): ProjectDocument[] {
     if (projectId) return this.documents.filter((d) => d.projectId === projectId);
@@ -327,6 +347,86 @@ class WorkspaceFirestoreStore {
   public getFiles(projectId?: string): ProjectFile[] {
     if (projectId) return this.files.filter((f) => f.projectId === projectId);
     return [...this.files];
+  }
+
+  // --- ACTIONS: NOTICES & VC MEETINGS ---
+  public createNotice(notice: Partial<WorkspaceNotice>, actorName = 'Founder'): WorkspaceNotice {
+    const now = new Date();
+    const dateStr = notice.date || now.toISOString().split('T')[0];
+    
+    // Auto-calculate expiration (default: meeting date + endTime, or +24 hrs)
+    let autoExpiresAt = notice.expiresAt;
+    if (!autoExpiresAt && dateStr && notice.endTime) {
+      try {
+        autoExpiresAt = new Date(`${dateStr}T${notice.endTime}:00`).toISOString();
+      } catch (e) {
+        autoExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      }
+    } else if (!autoExpiresAt) {
+      autoExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    const newNotice: WorkspaceNotice = {
+      id: generateId('notice'),
+      title: notice.title || 'Team Notice',
+      message: notice.message || '',
+      type: notice.type || 'General Notice',
+      postedBy: notice.postedBy || actorName,
+      postedByAvatar: notice.postedByAvatar,
+      createdAt: now.toISOString(),
+      date: dateStr,
+      startTime: notice.startTime,
+      endTime: notice.endTime,
+      expiresAt: autoExpiresAt,
+      meetingLink: notice.meetingLink,
+      isPinned: notice.isPinned ?? true
+    };
+
+    this.notices.unshift(newNotice);
+
+    // If VC meeting or meeting with time, automatically add to Unified Schedule
+    if (newNotice.startTime && newNotice.endTime) {
+      this.createScheduleEvent({
+        title: `${newNotice.type === 'Voice / Video Call (VC)' ? '📞 VC: ' : '👥 Meeting: '}${newNotice.title}`,
+        description: `${newNotice.message} ${newNotice.meetingLink ? `\nLink: ${newNotice.meetingLink}` : ''}`.trim(),
+        type: 'Meeting',
+        date: dateStr,
+        startTime: newNotice.startTime,
+        endTime: newNotice.endTime,
+        memberId: 'all'
+      });
+    }
+
+    // Broadcast system notification with auto-expiration
+    this.notifications.unshift({
+      id: generateId('notif'),
+      title: `${newNotice.type === 'Voice / Video Call (VC)' ? '📞 VC Call: ' : '📢 Notice: '}${newNotice.title}`,
+      message: `${newNotice.message} • ${newNotice.startTime ? `Time: ${newNotice.startTime}` : 'All Day'}${newNotice.meetingLink ? ' (Link Attached)' : ''}`,
+      type: newNotice.type === 'Voice / Video Call (VC)' ? 'vc_meeting' : 'team_notice',
+      urgency: newNotice.type === 'Urgent Alert' ? 'high' : 'medium',
+      read: false,
+      createdAt: now.toISOString(),
+      expiresAt: autoExpiresAt,
+      meetingLink: newNotice.meetingLink
+    });
+
+    this.logActivity('current_user', actorName, 'Broadcasted team notice/VC', 'notice', newNotice.title);
+    this.recomputeSystemIntelligence();
+    this.saveState();
+    return newNotice;
+  }
+
+  public deleteNotice(noticeId: string) {
+    this.notices = this.notices.filter((n) => n.id !== noticeId);
+    this.saveState();
+  }
+
+  public togglePinNotice(noticeId: string) {
+    const idx = this.notices.findIndex((n) => n.id === noticeId);
+    if (idx !== -1) {
+      this.notices[idx].isPinned = !this.notices[idx].isPinned;
+      this.saveState();
+    }
   }
 
   // --- ACTIONS: TASKS ---

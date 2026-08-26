@@ -25,6 +25,7 @@ import { IdeaModal } from '../modals/IdeaModal';
 import { ConfigSettingsModal } from '../modals/ConfigSettingsModal';
 import { UserProfileModal } from '../modals/UserProfileModal';
 import { VSCodeTrackerModal } from '../modules/Analytics/VSCodeTrackerModal';
+import { NewNoticeModal } from '../modals/NewNoticeModal';
 
 export const DesktopLayout: React.FC = () => {
   const {
@@ -68,6 +69,7 @@ export const DesktopLayout: React.FC = () => {
       <FileUploadModal />
       <IdeaModal />
       <ConfigSettingsModal />
+      <NewNoticeModal />
       <UserProfileModal
         isOpen={isUserProfileModalOpen}
         onClose={() => setIsUserProfileModalOpen(false)}

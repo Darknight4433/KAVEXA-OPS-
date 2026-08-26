@@ -17,7 +17,9 @@ import {
   Sliders,
   Code,
   User,
-  X
+  X,
+  Radio,
+  Video
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -38,6 +40,7 @@ export const Topbar: React.FC = () => {
     setIsNewTaskModalOpen,
     setIsNewProjectModalOpen,
     setIsNewIdeaModalOpen,
+    setIsNewNoticeModalOpen,
     updateMemberAvailability,
     authUser,
     loginWithGoogle,
@@ -198,6 +201,17 @@ export const Topbar: React.FC = () => {
               <div
                 onClick={() => {
                   setIsNewMenuOpen(false);
+                  setIsNewNoticeModalOpen(true);
+                }}
+                className="nav-item"
+                style={{ fontSize: '0.825rem', padding: '0.5rem 0.65rem' }}
+              >
+                <Video size={15} style={{ color: '#818cf8' }} />
+                <span>Schedule VC / Notice</span>
+              </div>
+              <div
+                onClick={() => {
+                  setIsNewMenuOpen(false);
                   setIsNewIdeaModalOpen(true);
                 }}
                 className="nav-item"
@@ -292,6 +306,31 @@ export const Topbar: React.FC = () => {
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                         {n.message}
                       </div>
+                      {n.meetingLink && (
+                        <div style={{ marginTop: '0.45rem' }}>
+                          <a
+                            href={n.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '4px',
+                              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
+                              color: '#ffffff',
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontWeight: 700
+                            }}
+                          >
+                            <Video size={12} />
+                            <span>Join VC Call ➔</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

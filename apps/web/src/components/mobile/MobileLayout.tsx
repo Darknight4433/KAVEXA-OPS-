@@ -7,6 +7,7 @@ import { MobileProjectsView } from './MobileProjectsView';
 import { MobileProfileTeamView } from './MobileProfileTeamView';
 import { MobileQuickAddModal } from './MobileQuickAddModal';
 import { FocusTimerHUD } from '../layout/FocusTimerHUD';
+import { NewNoticeModal } from '../modals/NewNoticeModal';
 
 export const MobileLayout: React.FC = () => {
   const { tasks } = useApp();
@@ -46,6 +47,8 @@ export const MobileLayout: React.FC = () => {
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
       />
+
+      <NewNoticeModal />
 
       {/* Native-feel Bottom Navigation */}
       <MobileBottomNav
