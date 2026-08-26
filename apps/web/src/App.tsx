@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
 import { MobileLayout } from './components/mobile/MobileLayout';
+import { MobileAuthBridge } from './components/auth/MobileAuthBridge';
 
 export const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth <= 768;
   });
+
+  const isMobileAuthFlow = typeof window !== 'undefined' && window.location.search.includes('mobile_login=1');
 
   useEffect(() => {
     const handleResize = () => {
@@ -16,6 +19,10 @@ export const App: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  if (isMobileAuthFlow) {
+    return <MobileAuthBridge />;
+  }
 
   return isMobile ? <MobileLayout /> : <DesktopLayout />;
 };

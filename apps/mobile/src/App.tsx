@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,8 +9,11 @@ import {
   StatusBar,
   TextInput,
   Modal,
-  Alert
+  Alert,
+  Linking,
+  ActivityIndicator
 } from 'react-native';
+import { fetchWorkspaceData, saveWorkspaceData } from './firebaseSync';
 
 interface MobileTask {
   id: string;
@@ -50,6 +53,7 @@ interface MobileStudyTask {
 
 export default function MobileApp() {
   const [activeTab, setActiveTab] = useState<'today' | 'tasks' | 'projects' | 'profile'>('today');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Modals
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -60,19 +64,19 @@ export default function MobileApp() {
   const [activeProjectTab, setActiveProjectTab] = useState<'overview' | 'tasks' | 'files'>('overview');
   const [activeFilePreview, setActiveFilePreview] = useState<MobileFile | null>(null);
 
-  // Authenticated Founder Persona (Starts purely data-driven, NO hardcoded fake people)
+  // Authenticated Founder Persona (Zero hardcoded names)
   const [currentMember, setCurrentMember] = useState({
     name: 'Profile not configured',
     email: 'Not signed in',
     role: 'Role not configured',
-    domain: 'Not set',
-    university: 'Not set',
-    bio: 'No bio provided yet.',
+    domain: '',
+    university: '',
+    bio: '',
     availability: 'Available' as 'Available' | 'Busy' | 'Studying' | 'Offline',
     isLoggedIn: false
   });
 
-  // Pure data-driven collections (Zero fake seed data)
+  // Collections (Synchronized with Firestore)
   const [projects, setProjects] = useState<MobileProject[]>([]);
   const [tasks, setTasks] = useState<MobileTask[]>([]);
   const [files, setFiles] = useState<MobileFile[]>([]);
@@ -88,11 +92,170 @@ export default function MobileApp() {
   const [editRole, setEditRole] = useState('');
   const [editEmail, setEditEmail] = useState('');
 
+  // Sync with Firestore on mount and recurring
+  const syncWithFirestore = async () => {
+    try {
+      const data = await fetchWorkspaceData();
+      if (data) {
+        if (Array.isArray(data.projects)) {
+          setProjects(
+            data.projects.map((p: any) => ({
+              id: p.id,
+              name: p.name || 'Untitled Project',
+              description: p.description || '',
+              progress: p.progress || 0,
+              status: p.status || 'Active',
+              health: (p.health?.status === 'Critical' ? 'Critical' : p.health?.status === 'At Risk' ? 'Caution' : 'Healthy') as any
+            }))
+          );
+        }
+        if (Array.isArray(data.tasks)) {
+          setTasks(
+            data.tasks.map((t: any) => ({
+              id: t.id,
+              title: t.title || 'Untitled Task',
+              category: t.category === 'Study' ? 'Study' : 'KAVEXA Work',
+              priority: t.priority || 'Medium',
+              completed: t.status === 'Completed',
+              project: t.projectId || 'General',
+              dueDate: t.deadline || 'No deadline'
+            }))
+          );
+        }
+        if (Array.isArray(data.studyTasks)) {
+          setStudyTasks(
+            data.studyTasks.map((s: any) => ({
+              id: s.id,
+              title: s.title,
+              subject: s.subject || 'Coursework',
+              dueDate: s.dueDate || 'No deadline',
+              completed: s.completed || false
+            }))
+          );
+        }
+        if (Array.isArray(data.files)) {
+          setFiles(
+            data.files.map((f: any) => ({
+              id: f.id,
+              fileName: f.name || f.fileName || 'file.pdf',
+              fileType: f.fileType || 'PDF',
+              uploadedBy: f.uploadedBy || 'User',
+              size: f.size || '1.0 MB',
+              projectId: f.projectId || 'general'
+            }))
+          );
+        }
+        if (Array.isArray(data.members) && data.members.length > 0 && !currentMember.isLoggedIn) {
+          const m = data.members[0];
+          if (m && m.name && m.name !== 'Profile not configured') {
+            setCurrentMember({
+              name: m.name,
+              email: m.email || '',
+              role: m.role || 'Founder',
+              domain: m.focusDomain || '',
+              university: m.university || '',
+              bio: m.bio || '',
+              availability: m.availability || 'Available',
+              isLoggedIn: true
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[MobileApp] Sync error:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    syncWithFirestore();
+
+    // Polling sync every 12 seconds for real-time consistency
+    const timer = setInterval(syncWithFirestore, 12000);
+
+    // Deep Linking Listener for Google OAuth Chrome Redirect
+    const handleUrl = (eventUrl: string | null) => {
+      if (!eventUrl) return;
+      try {
+        // e.g. kavexa://auth?uid=...&name=...&email=...&photo=...
+        const urlObj = new URL(eventUrl);
+        const uid = urlObj.searchParams.get('uid');
+        const name = urlObj.searchParams.get('name');
+        const email = urlObj.searchParams.get('email');
+        const photo = urlObj.searchParams.get('photo');
+
+        if (uid && email) {
+          const decodedName = decodeURIComponent(name || email.split('@')[0]);
+          const decodedEmail = decodeURIComponent(email);
+
+          setCurrentMember({
+            name: decodedName,
+            email: decodedEmail,
+            role: 'Founder',
+            domain: '',
+            university: '',
+            bio: '',
+            availability: 'Available',
+            isLoggedIn: true
+          });
+
+          // Save authenticated user profile to Firestore
+          saveWorkspaceData({
+            members: [
+              {
+                id: uid,
+                name: decodedName,
+                email: decodedEmail,
+                role: 'Founder',
+                avatarUrl: photo ? decodeURIComponent(photo) : '/app-icon.png',
+                availability: 'Available',
+                weeklyWorkloadHours: 0,
+                skills: []
+              }
+            ]
+          });
+
+          Alert.alert('🎉 Google Sign-In Complete', `Welcome back, ${decodedName}! Authenticated via Chrome.`);
+        }
+      } catch (err) {
+        console.warn('Deep link parse error:', err);
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', (e) => handleUrl(e.url));
+
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, []);
+
+  const handleLoginWithChrome = () => {
+    const renderAuthUrl = 'https://kavexa-ops.onrender.com/?mobile_login=1';
+    Linking.openURL(renderAuthUrl).catch(() => {
+      Alert.alert('Browser Notice', 'Please open https://kavexa-ops.onrender.com/?mobile_login=1 in Chrome to complete authentication.');
+    });
+  };
+
   const focusTask = tasks.find((t) => !t.completed);
   const nextTasks = tasks.filter((t) => !t.completed && t.id !== focusTask?.id).slice(0, 3);
 
   const toggleTask = (id: string) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    const updated = tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+    setTasks(updated);
+    saveWorkspaceData({
+      tasks: updated.map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.completed ? 'Completed' : 'In Progress',
+        category: t.category,
+        priority: t.priority,
+        projectId: t.project,
+        deadline: t.dueDate
+      }))
+    });
   };
 
   const handleQuickCreate = () => {
@@ -100,61 +263,103 @@ export default function MobileApp() {
 
     if (quickType === 'task') {
       const newTask: MobileTask = {
-        id: 't_' + Date.now(),
+        id: 'task_' + Date.now(),
         title: quickTitle.trim(),
         category: 'KAVEXA Work',
         priority: 'High',
         completed: false,
-        project: projects.find((p) => p.id === quickProject)?.name || 'General'
+        project: projects.find((p) => p.id === quickProject)?.name || 'General',
+        dueDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
       };
-      setTasks([newTask, ...tasks]);
+      const updated = [newTask, ...tasks];
+      setTasks(updated);
+      saveWorkspaceData({
+        tasks: updated.map((t) => ({
+          id: t.id,
+          title: t.title,
+          status: t.completed ? 'Completed' : 'Not Started',
+          category: t.category,
+          priority: t.priority,
+          projectId: t.project,
+          deadline: t.dueDate
+        }))
+      });
     } else if (quickType === 'project') {
       const newProj: MobileProject = {
-        id: 'p_' + Date.now(),
+        id: 'proj_' + Date.now(),
         name: quickTitle.trim(),
-        description: 'New operational project.',
+        description: 'Operational project.',
         progress: 0,
-        status: 'Active',
+        status: 'In Progress',
         health: 'Healthy'
       };
-      setProjects([newProj, ...projects]);
+      const updated = [newProj, ...projects];
+      setProjects(updated);
+      saveWorkspaceData({
+        projects: updated.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          status: p.status,
+          progress: p.progress,
+          health: { status: p.health, score: 100, warnings: [] }
+        }))
+      });
     } else if (quickType === 'file') {
       const newFile: MobileFile = {
-        id: 'f_' + Date.now(),
+        id: 'file_' + Date.now(),
         fileName: quickTitle.trim().endsWith('.pdf') ? quickTitle.trim() : quickTitle.trim() + '.png',
         fileType: quickTitle.trim().endsWith('.pdf') ? 'PDF' : 'Image',
         uploadedBy: currentMember.name,
         size: '1.2 MB',
-        projectId: quickProject || 'default_proj'
+        projectId: quickProject || 'general'
       };
-      setFiles([newFile, ...files]);
+      const updated = [newFile, ...files];
+      setFiles(updated);
+      saveWorkspaceData({ files: updated });
     } else {
       const newStudy: MobileStudyTask = {
-        id: 'st_' + Date.now(),
+        id: 'study_' + Date.now(),
         title: quickTitle.trim(),
         subject: 'General Coursework',
-        dueDate: 'Not set',
+        dueDate: 'Upcoming',
         completed: false
       };
-      setStudyTasks([newStudy, ...studyTasks]);
+      const updated = [newStudy, ...studyTasks];
+      setStudyTasks(updated);
+      saveWorkspaceData({ studyTasks: updated });
     }
 
     setQuickTitle('');
     setIsQuickAddOpen(false);
-    Alert.alert('⚡ Created & Synced', 'Saved to your real operational database.');
+    Alert.alert('⚡ Created & Synced', 'Saved to Cloud Firestore.');
   };
 
   const handleSaveProfile = () => {
     if (!editName.trim()) return;
-    setCurrentMember({
+    const updated = {
       ...currentMember,
       name: editName.trim(),
       role: editRole.trim() || 'Founder',
       email: editEmail.trim() || 'user@kavexa.io',
       isLoggedIn: true
+    };
+    setCurrentMember(updated);
+    saveWorkspaceData({
+      members: [
+        {
+          id: 'member_' + Date.now(),
+          name: updated.name,
+          role: updated.role,
+          email: updated.email,
+          availability: updated.availability,
+          weeklyWorkloadHours: 0,
+          skills: []
+        }
+      ]
     });
     setIsAuthModalOpen(false);
-    Alert.alert('✓ Profile Configured', 'Your identity has been saved.');
+    Alert.alert('✓ Profile Saved', 'Saved to Cloud Firestore.');
   };
 
   return (
@@ -500,8 +705,16 @@ export default function MobileApp() {
               <Text style={styles.profileEmail}>
                 {currentMember.isLoggedIn ? `✓ ${currentMember.email}` : 'Not signed in'}
               </Text>
+
               <TouchableOpacity
-                style={[styles.btnSecondary, { marginTop: 10 }]}
+                style={[styles.btnPrimary, { marginTop: 12, backgroundColor: '#6366F1' }]}
+                onPress={handleLoginWithChrome}
+              >
+                <Text style={styles.btnPrimaryText}>🌐 Sign In with Google (Chrome)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.btnSecondary, { marginTop: 8 }]}
                 onPress={() => {
                   setEditName(currentMember.name === 'Profile not configured' ? '' : currentMember.name);
                   setEditRole(currentMember.role === 'Role not configured' ? '' : currentMember.role);
@@ -510,7 +723,7 @@ export default function MobileApp() {
                 }}
               >
                 <Text style={styles.btnSecondaryText}>
-                  {currentMember.isLoggedIn ? 'Edit Profile' : 'Complete Profile'}
+                  {currentMember.isLoggedIn ? 'Edit Profile Details' : 'Manual Setup'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -568,8 +781,20 @@ export default function MobileApp() {
       <Modal visible={isAuthModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Configure Profile</Text>
-            <Text style={styles.modalSub}>Define your real founder identity & email.</Text>
+            <Text style={styles.modalTitle}>Founder Authentication</Text>
+            <Text style={styles.modalSub}>Sign in via Google in Chrome or configure manually.</Text>
+
+            <TouchableOpacity
+              style={[styles.btnPrimary, { marginBottom: 12, backgroundColor: '#6366F1' }]}
+              onPress={() => {
+                setIsAuthModalOpen(false);
+                handleLoginWithChrome();
+              }}
+            >
+              <Text style={styles.btnPrimaryText}>🌐 Sign In with Google (Chrome)</Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 1, backgroundColor: '#242424', marginVertical: 8 }} />
 
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput

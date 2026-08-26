@@ -75,7 +75,6 @@ class WorkspaceFirestoreStore {
   }
 
   private initRealtimeFirestoreSync() {
-    if (typeof window === 'undefined') return;
     try {
       if (db) {
         const workspaceDocRef = doc(db, 'workspaces', this.firestoreDocName);
@@ -113,7 +112,7 @@ class WorkspaceFirestoreStore {
           },
           (error) => {
             this.hasLoadedInitialData = true;
-            console.warn('Firestore live listener info:', error.message);
+            console.warn('[Firestore] Live listener notice:', error.message);
             this.notify();
           }
         );
@@ -122,7 +121,7 @@ class WorkspaceFirestoreStore {
       }
     } catch (e) {
       this.hasLoadedInitialData = true;
-      console.warn('Firestore real-time sync init:', e);
+      console.warn('[Firestore] Real-time sync init error:', e);
     }
   }
 
