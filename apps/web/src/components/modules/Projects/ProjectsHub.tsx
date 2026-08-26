@@ -159,68 +159,114 @@ export const ProjectsHub: React.FC = () => {
         </div>
       </div>
 
-      {/* VIEW 1: GRID VIEW */}
-      {viewMode === 'grid' && (
-        <div className="grid-3">
-          {filteredProjects.map((proj) => {
-            const projTasks = tasks.filter((t) => t.projectId === proj.id);
-            const daysLeft = getDaysUntil(proj.deadline);
+      {filteredProjects.length === 0 ? (
+        <div
+          className="card"
+          style={{
+            padding: '3.5rem 2rem',
+            textAlign: 'center',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.2) 100%)',
+            border: '1px dashed var(--border-medium)',
+            borderRadius: 'var(--radius-lg)'
+          }}
+        >
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: 'rgba(99, 102, 241, 0.12)',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              color: 'var(--accent-primary)'
+            }}
+          >
+            <FolderKanban size={32} />
+          </div>
 
-            return (
-              <div
-                key={proj.id}
-                className="card"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  borderTop: `3px solid ${proj.accentColor || 'var(--accent-primary)'}`
-                }}
-                onClick={() => setSelectedProjectId(proj.id)}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '4px',
-                        background: 'rgba(99, 102, 241, 0.15)',
-                        color: '#818cf8'
-                      }}
-                    >
-                      {proj.status}
-                    </span>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.4rem' }}>
+            No Projects in Workspace
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '480px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+            Your workspace is clean and ready. Create your first operational project workspace to start tracking tasks, PRDs, architecture, and live synchronization.
+          </p>
 
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '4px',
-                        background: proj.health.status === 'Healthy' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                        color: proj.health.status === 'Healthy' ? '#10b981' : '#f59e0b'
-                      }}
-                    >
-                      Health: {proj.health.status}
-                    </span>
-                  </div>
+          <button
+            onClick={() => setIsNewProjectModalOpen(true)}
+            className="btn btn-primary"
+            style={{ padding: '0.7rem 1.4rem', fontSize: '0.9rem', margin: '0 auto', gap: '0.5rem' }}
+          >
+            <Plus size={16} />
+            <span>Create First Project</span>
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* VIEW 1: GRID VIEW */}
+          {viewMode === 'grid' && (
+            <div className="grid-3">
+              {filteredProjects.map((proj) => {
+                const projTasks = tasks.filter((t) => t.projectId === proj.id);
+                const daysLeft = getDaysUntil(proj.deadline);
 
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.4rem' }}>
-                    {proj.name}
-                  </h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '1rem', minHeight: '38px' }}>
-                    {proj.description}
-                  </p>
+                return (
+                  <div
+                    key={proj.id}
+                    className="card"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      borderTop: `3px solid ${proj.accentColor || 'var(--accent-primary)'}`
+                    }}
+                    onClick={() => setSelectedProjectId(proj.id)}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '4px',
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            color: '#818cf8'
+                          }}
+                        >
+                          {proj.status}
+                        </span>
 
-                  {/* Links icons */}
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                    {proj.githubUrl && <Github size={15} style={{ color: 'var(--text-muted)' }} />}
-                    {proj.figmaUrl && <Figma size={15} style={{ color: 'var(--text-muted)' }} />}
-                  </div>
-                </div>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '4px',
+                            background: proj.health.status === 'Healthy' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: proj.health.status === 'Healthy' ? '#10b981' : '#f59e0b'
+                          }}
+                        >
+                          Health: {proj.health.status}
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.4rem' }}>
+                        {proj.name}
+                      </h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '1rem', minHeight: '38px' }}>
+                        {proj.description}
+                      </p>
+
+                      {/* Links icons */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        {proj.githubUrl && <Github size={15} style={{ color: 'var(--text-muted)' }} />}
+                        {proj.figmaUrl && <Figma size={15} style={{ color: 'var(--text-muted)' }} />}
+                      </div>
+                    </div>
 
                 <div>
                   {/* Progress */}
@@ -380,6 +426,8 @@ export const ProjectsHub: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
+  )}
+</div>
   );
 };
