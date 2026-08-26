@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DesktopLayout } from './components/desktop/DesktopLayout';
 import { MobileLayout } from './components/mobile/MobileLayout';
 import { MobileAuthBridge } from './components/auth/MobileAuthBridge';
+import { DesktopAuthBridge } from './components/auth/DesktopAuthBridge';
 
 export const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -10,6 +11,7 @@ export const App: React.FC = () => {
   });
 
   const isMobileAuthFlow = typeof window !== 'undefined' && window.location.search.includes('mobile_login=1');
+  const isDesktopAuthFlow = typeof window !== 'undefined' && window.location.search.includes('desktop_auth=1');
 
   useEffect(() => {
     const handleResize = () => {
@@ -22,6 +24,10 @@ export const App: React.FC = () => {
 
   if (isMobileAuthFlow) {
     return <MobileAuthBridge />;
+  }
+
+  if (isDesktopAuthFlow) {
+    return <DesktopAuthBridge />;
   }
 
   return isMobile ? <MobileLayout /> : <DesktopLayout />;

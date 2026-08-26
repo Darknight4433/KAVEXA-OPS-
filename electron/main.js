@@ -1,17 +1,13 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
-
-// Set a standard Chrome user agent so Google OAuth allows sign-in inside Electron
-const CHROME_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
-app.userAgentFallback = CHROME_USER_AGENT;
 
 let mainWindow = null;
 let server = null;
 const LOCAL_PORT = 5173;
 
-// Lightweight zero-dependency static server so Electron always runs on http://localhost:5173 (Firebase authorized domain)
+// Lightweight zero-dependency static server & auth bridge
 function startLocalServer(callback) {
   const distDir = path.join(__dirname, '../apps/web/dist');
 
@@ -30,6 +26,45 @@ function startLocalServer(callback) {
   };
 
   server = http.createServer((req, res) => {
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    // Handle desktop auth callback from external browser
+    if (req.method === 'POST' && req.url === '/api/desktop-auth-callback') {
+      let body = '';
+      req.on('data', (chunk) => {
+        body += chunk;
+      });
+      req.on('end', () => {
+        try {
+          const userData = JSON.parse(body);
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('auth-user-synced', userData);
+            mainWindow.show();
+            mainWindow.focus();
+          }
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type'
+          });
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(400);
+          res.end('Invalid JSON payload');
+        }
+      });
+      return;
+    }
+
     const rawPath = req.url.split('?')[0];
     let filePath = path.join(distDir, rawPath);
 
@@ -56,7 +91,7 @@ function startLocalServer(callback) {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.log(`Port ${LOCAL_PORT} already in use (e.g. Vite dev server). Using existing server.`);
+      console.log(`Port ${LOCAL_PORT} already in use. Using active server.`);
       callback(`http://localhost:${LOCAL_PORT}`);
     } else {
       console.error('Server error:', err);
@@ -89,8 +124,6 @@ function createWindow(targetUrl) {
     show: false
   });
 
-  mainWindow.webContents.setUserAgent(CHROME_USER_AGENT);
-
   if (targetUrl) {
     mainWindow.loadURL(targetUrl);
   } else {
@@ -102,31 +135,8 @@ function createWindow(targetUrl) {
     mainWindow.show();
   });
 
-  // Handle popups & auth windows
+  // Open external links in user's default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // Allow Firebase Authentication and Google OAuth popups within Electron
-    if (
-      url.includes('firebaseapp.com') ||
-      url.includes('accounts.google.com') ||
-      url.includes('google.com/o/oauth2') ||
-      url.includes('googleapis.com')
-    ) {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 520,
-          height: 680,
-          autoHideMenuBar: true,
-          backgroundColor: '#0A0A0A',
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true
-          }
-        }
-      };
-    }
-
-    // Open external links in user's default browser
     if (url.startsWith('https:') || url.startsWith('http:')) {
       shell.openExternal(url);
     }
@@ -137,6 +147,11 @@ function createWindow(targetUrl) {
     mainWindow = null;
   });
 }
+
+ipcMain.on('open-external-browser', (event, url) => {
+  const targetUrl = url || `http://localhost:${LOCAL_PORT}/?desktop_auth=1`;
+  shell.openExternal(targetUrl);
+});
 
 app.whenReady().then(() => {
   startLocalServer((url) => {

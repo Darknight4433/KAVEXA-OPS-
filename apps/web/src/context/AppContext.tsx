@@ -216,6 +216,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [authUser, setAuthUser] = useState<any>(null);
 
   const loginWithGoogle = async () => {
+    // 1. If running inside Electron Desktop App: Open real external browser for 100% Google compliance
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.isElectron) {
+      (window as any).electronAPI.openExternalBrowser('http://localhost:5173/?desktop_auth=1');
+      return;
+    }
+
+    // 2. Standard Web browser flow
     try {
       const { signInWithGoogle } = await import('@kavexa/firebase');
       const user = await signInWithGoogle();
@@ -262,9 +269,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     }).catch((e) => console.warn('Auth sync listener:', e));
 
+    // Electron Desktop Auth loopback bridge listener
+    let unsubscribeElectron: any = null;
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.onAuthSuccess) {
+      unsubscribeElectron = (window as any).electronAPI.onAuthSuccess((user: any) => {
+        if (user) {
+          setAuthUser(user);
+          workspaceFirestore.syncGoogleUser(user);
+          setIsUserProfileModalOpen(true);
+        }
+      });
+    }
+
     return () => {
       unsubscribe();
       if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeElectron) unsubscribeElectron();
     };
   }, []);
 
