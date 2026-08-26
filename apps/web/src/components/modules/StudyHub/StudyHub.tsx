@@ -34,6 +34,7 @@ export const StudyHub: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'all' | 'homework' | 'exams' | 'revision'>('all');
+  const [viewScope, setViewScope] = useState<'my' | 'team'>('my');
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isNewSubjectOpen, setIsNewSubjectOpen] = useState(false);
 
@@ -43,28 +44,36 @@ export const StudyHub: React.FC = () => {
   const [subInstructor, setSubInstructor] = useState('');
   const [subCredits, setSubCredits] = useState(4);
   const [subColor, setSubColor] = useState('#06b6d4');
+  const [subIsPublic, setSubIsPublic] = useState(false);
 
-  // Personal filter: Study hub items are personal to the logged in user
-  const mySubjects = subjects.filter(
-    (s) => !s.memberId || s.memberId === currentMemberId || s.memberId === currentMember.id
-  );
+  // Filter subjects based on personal vs team scope
+  const displayedSubjects = subjects.filter((s) => {
+    if (viewScope === 'my') {
+      return !s.memberId || s.memberId === currentMemberId || s.memberId === currentMember.id;
+    }
+    return s.isPublic || !s.memberId || s.memberId === currentMemberId || s.memberId === currentMember.id;
+  });
 
   // Task Form State
   const [newTitle, setNewTitle] = useState('');
-  const [newSubjectId, setNewSubjectId] = useState(mySubjects[0]?.id || 'sub_general');
+  const [newSubjectId, setNewSubjectId] = useState(displayedSubjects[0]?.id || 'sub_general');
   const [newType, setNewType] = useState<StudyTask['type']>('Homework');
   const [newDeadline, setNewDeadline] = useState('');
   const [newEstTime, setNewEstTime] = useState(60);
+  const [taskIsPublic, setTaskIsPublic] = useState(false);
 
-  // Personal study tasks
-  const myStudyTasks = studyTasks.filter(
-    (st) => !st.memberId || st.memberId === currentMemberId || st.memberId === currentMember.id
-  );
+  // Filter study tasks based on personal vs team scope
+  const displayedStudyTasks = studyTasks.filter((st) => {
+    if (viewScope === 'my') {
+      return !st.memberId || st.memberId === currentMemberId || st.memberId === currentMember.id;
+    }
+    return st.isPublic || !st.memberId || st.memberId === currentMemberId || st.memberId === currentMember.id;
+  });
 
-  // Compute Work-Study Balance
-  const studyHours = myStudyTasks.reduce((acc, st) => acc + (st.isCompleted ? 0 : st.estimatedStudyTime / 60), 0);
+  // Compute Work-Study Balance for current user
+  const studyHours = displayedStudyTasks.reduce((acc, st) => acc + (st.isCompleted ? 0 : st.estimatedStudyTime / 60), 0);
   const kavexaHours = tasks
-    .filter((t) => t.category === 'KAVEXA Work' && t.status !== 'Completed' && (!t.assignedMemberId || t.assignedMemberId === currentMemberId))
+    .filter((t) => t.category === 'KAVEXA Work' && t.status !== 'Completed' && (!t.assignedMemberId || t.assignedMemberId === currentMemberId || t.assignedMemberId === currentMember.id))
     .reduce((acc, t) => acc + t.estimatedDuration / 60, 0);
 
   const totalHours = studyHours + kavexaHours || 1;
@@ -80,12 +89,14 @@ export const StudyHub: React.FC = () => {
       instructor: subInstructor.trim() || 'Faculty',
       credits: Number(subCredits) || 4,
       color: subColor,
-      memberId: currentMemberId
+      memberId: currentMemberId || currentMember.id,
+      isPublic: subIsPublic
     });
     setNewSubjectId(created.id);
     setSubName('');
     setSubCode('');
     setSubInstructor('');
+    setSubIsPublic(false);
     setIsNewSubjectOpen(false);
   };
 
@@ -94,17 +105,19 @@ export const StudyHub: React.FC = () => {
     if (!newTitle.trim()) return;
     createStudyTask({
       title: newTitle.trim(),
-      subjectId: newSubjectId || mySubjects[0]?.id,
+      subjectId: newSubjectId || displayedSubjects[0]?.id,
       type: newType,
       deadline: newDeadline || new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
       estimatedStudyTime: Number(newEstTime) || 60,
-      memberId: currentMemberId
+      memberId: currentMemberId || currentMember.id,
+      isPublic: taskIsPublic
     });
     setNewTitle('');
+    setTaskIsPublic(false);
     setIsNewTaskOpen(false);
   };
 
-  const filteredStudyTasks = myStudyTasks.filter((st) => {
+  const filteredStudyTasks = displayedStudyTasks.filter((st) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'homework') return st.type === 'Homework' || st.type === 'Assignment';
     if (activeTab === 'exams') return st.type === 'Exam';
@@ -117,30 +130,57 @@ export const StudyHub: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
             <GraduationCap size={22} style={{ color: 'var(--accent-amber)' }} />
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc' }}>
               Academic Study Hub
             </h1>
-            <span
-              style={{
-                fontSize: '0.7rem',
-                color: 'var(--accent-cyan)',
-                background: 'rgba(6, 182, 212, 0.12)',
-                padding: '0.2rem 0.5rem',
-                borderRadius: '999px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                border: '1px solid rgba(6, 182, 212, 0.25)'
-              }}
-            >
-              <User size={11} />
-              <span>Personal to {currentMember.name}</span>
-            </span>
+            
+            {/* Scope Selector: Private to Me vs Team Shared */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: '999px', padding: '2px', border: '1px solid var(--border-subtle)' }}>
+              <button
+                onClick={() => setViewScope('my')}
+                style={{
+                  border: 'none',
+                  background: viewScope === 'my' ? 'var(--accent-cyan)' : 'transparent',
+                  color: viewScope === 'my' ? '#000000' : 'var(--text-secondary)',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+              >
+                <User size={11} />
+                <span>My Private Coursework</span>
+              </button>
+              <button
+                onClick={() => setViewScope('team')}
+                style={{
+                  border: 'none',
+                  background: viewScope === 'team' ? 'var(--accent-primary)' : 'transparent',
+                  color: viewScope === 'team' ? '#ffffff' : 'var(--text-secondary)',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+              >
+                <span>🌐 Team Shared</span>
+              </button>
+            </div>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            Private academic coursework, university subjects, and homework synced exclusively for your personal schedule.
+            {viewScope === 'my'
+              ? 'Private academic coursework, university subjects, and homework synced exclusively for your personal schedule.'
+              : 'Viewing shared university coursework and study milestones across all co-founders.'}
           </p>
         </div>
 
@@ -201,7 +241,7 @@ export const StudyHub: React.FC = () => {
       {/* University Subject Cards */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-          My Enrolled Courses ({mySubjects.length})
+          {viewScope === 'my' ? 'My Enrolled Courses' : 'Team Enrolled Courses'} ({displayedSubjects.length})
         </div>
         <button
           onClick={() => setIsNewSubjectOpen(true)}
@@ -212,22 +252,24 @@ export const StudyHub: React.FC = () => {
         </button>
       </div>
 
-      {mySubjects.length === 0 ? (
+      {displayedSubjects.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '2rem', marginBottom: '1.5rem', border: '1px dashed var(--border-subtle)' }}>
           <BookOpen size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 0.75rem' }} />
-          <h4 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '0.3rem' }}>No Courses Added Yet</h4>
+          <h4 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '0.3rem' }}>No Courses in this View</h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem' }}>
-            Add your semester courses (e.g. Operating Systems, Calculus) to track homework and exam deadlines.
+            {viewScope === 'my'
+              ? 'Add your semester courses (e.g. Operating Systems, Calculus) to track homework and exam deadlines.'
+              : 'No co-founders have shared public courses yet.'}
           </p>
           <button onClick={() => setIsNewSubjectOpen(true)} className="btn btn-primary" style={{ fontSize: '0.8rem' }}>
             <Plus size={14} />
-            <span>Add My First Course</span>
+            <span>Add Course</span>
           </button>
         </div>
       ) : (
         <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-          {mySubjects.map((sub) => {
-            const subTasks = myStudyTasks.filter((t) => t.subjectId === sub.id && !t.isCompleted);
+          {displayedSubjects.map((sub) => {
+            const subTasks = displayedStudyTasks.filter((t) => t.subjectId === sub.id && !t.isCompleted);
             return (
               <div
                 key={sub.id}
@@ -241,6 +283,9 @@ export const StudyHub: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
                   <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{sub.code}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.65rem', color: sub.isPublic ? 'var(--accent-primary)' : 'var(--text-dim)', background: 'rgba(255,255,255,0.05)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                      {sub.isPublic ? '🌐 Team' : '🔒 Private'}
+                    </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)', background: 'rgba(245,158,11,0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                       {sub.credits} Credits
                     </span>
@@ -275,7 +320,7 @@ export const StudyHub: React.FC = () => {
       <div className="card">
         <div className="tabs-header" style={{ marginBottom: '1rem' }}>
           <button onClick={() => setActiveTab('all')} className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}>
-            All Coursework ({myStudyTasks.length})
+            All Coursework ({displayedStudyTasks.length})
           </button>
           <button onClick={() => setActiveTab('homework')} className={`tab-btn ${activeTab === 'homework' ? 'active' : ''}`}>
             Homework & Assignments
@@ -300,7 +345,7 @@ export const StudyHub: React.FC = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {filteredStudyTasks.map((st) => {
-              const subject = mySubjects.find((s) => s.id === st.subjectId);
+              const subject = displayedSubjects.find((s) => s.id === st.subjectId);
               const daysLeft = getDaysUntil(st.deadline);
 
               return (
@@ -458,6 +503,19 @@ export const StudyHub: React.FC = () => {
                 </div>
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
+                <input
+                  type="checkbox"
+                  id="subIsPublic"
+                  checked={subIsPublic}
+                  onChange={(e) => setSubIsPublic(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent-cyan)', cursor: 'pointer' }}
+                />
+                <label htmlFor="subIsPublic" style={{ fontSize: '0.8rem', color: '#f8fafc', cursor: 'pointer' }}>
+                  🌐 Share this course with co-founders (Make visible to team)
+                </label>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.25rem' }}>
                 <button type="button" onClick={() => setIsNewSubjectOpen(false)} className="btn btn-secondary">
                   Cancel
@@ -486,7 +544,7 @@ export const StudyHub: React.FC = () => {
                   onChange={(e) => setNewSubjectId(e.target.value)}
                   className="form-select"
                 >
-                  {mySubjects.map((s) => (
+                  {displayedSubjects.map((s) => (
                     <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
                   ))}
                 </select>
@@ -537,6 +595,19 @@ export const StudyHub: React.FC = () => {
                   onChange={(e) => setNewDeadline(e.target.value)}
                   className="form-input"
                 />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
+                <input
+                  type="checkbox"
+                  id="taskIsPublic"
+                  checked={taskIsPublic}
+                  onChange={(e) => setTaskIsPublic(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                />
+                <label htmlFor="taskIsPublic" style={{ fontSize: '0.8rem', color: '#f8fafc', cursor: 'pointer' }}>
+                  🌐 Share study milestone with co-founders (Team visibility)
+                </label>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.25rem' }}>

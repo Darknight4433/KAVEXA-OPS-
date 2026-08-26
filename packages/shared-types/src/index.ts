@@ -306,6 +306,7 @@ export interface StudySubject {
   credits: number;
   weeklyHours: number;
   memberId?: string;
+  isPublic?: boolean;
 }
 
 export type StudyTaskType = 'Homework' | 'Exam' | 'Revision' | 'Assignment' | 'Project';
@@ -324,6 +325,7 @@ export interface StudyTask {
   examDate?: string;
   completedAt?: string;
   memberId?: string;
+  isPublic?: boolean;
 }
 
 export type IdeaStatus = 'New' | 'Exploring' | 'Planning' | 'Converted to Project' | 'Archived';
