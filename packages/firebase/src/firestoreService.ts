@@ -881,38 +881,45 @@ class WorkspaceFirestoreStore {
   }
 
   public syncGoogleUser(googleUser: { uid: string; displayName?: string | null; email?: string | null; photoURL?: string | null }) {
-    if (!googleUser.email) return;
-    const existing = this.members.find(
-      (m) => m.email === googleUser.email || m.id === googleUser.uid || m.id === 'member_vaish'
+    if (!googleUser.email && !googleUser.uid) return;
+    const userEmail = (googleUser.email || '').toLowerCase().trim();
+    
+    const existingIndex = this.members.findIndex(
+      (m) => (m.id && m.id === googleUser.uid) || (userEmail && m.email && m.email.toLowerCase().trim() === userEmail)
     );
-    if (existing) {
+
+    if (existingIndex !== -1) {
+      // Update the authentic user profile in-place
+      const existing = this.members[existingIndex];
       if (googleUser.displayName) existing.name = googleUser.displayName;
       if (googleUser.email) existing.email = googleUser.email;
       if (googleUser.photoURL) existing.avatarUrl = googleUser.photoURL;
+      existing.id = googleUser.uid;
     } else {
+      // Create new authentic team member entry
       const newMember: TeamMember = {
         id: googleUser.uid,
-        name: googleUser.displayName || googleUser.email.split('@')[0],
-        role: 'Founder & Technical Lead',
-        email: googleUser.email,
+        name: googleUser.displayName || googleUser.email?.split('@')[0] || 'Team Member',
+        role: this.members.length === 0 ? 'Founder & Lead' : 'Team Member',
+        email: googleUser.email || '',
         avatarUrl: googleUser.photoURL || '/app-icon.png',
         availability: 'Available',
         weeklyWorkloadHours: 0,
         assignedTasksCount: 0,
         completedTasksCount: 0,
-        skills: ['Startup Operations', 'Technical Architecture'],
+        skills: ['Operations'],
         todayFreeSlots: [
-          { start: '09:00', end: '12:00' },
+          { start: '09:00', end: '13:00' },
           { start: '14:00', end: '18:00' }
         ]
       };
-      this.members.unshift(newMember);
+      this.members.push(newMember);
     }
 
-    // Deduplicate any duplicate members with same name/email
+    // Deduplicate members cleanly
     const seen = new Set<string>();
     this.members = this.members.filter((m) => {
-      const key = (m.email || m.name).toLowerCase().trim();
+      const key = (m.id || m.email || m.name).toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
