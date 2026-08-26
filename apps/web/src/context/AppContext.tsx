@@ -241,7 +241,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAuthUser(user);
         setCurrentMemberId(user.uid);
         workspaceFirestore.syncGoogleUser(user);
-        setIsUserProfileModalOpen(true);
+        triggerConfetti();
       }
     } catch (e: any) {
       console.error('Google login error:', e);
@@ -291,7 +291,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setAuthUser(user);
           setCurrentMemberId(user.uid);
           workspaceFirestore.syncGoogleUser(user);
-          setIsUserProfileModalOpen(true);
+          triggerConfetti();
         }
       });
     }
@@ -316,28 +316,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   const triggerConfetti = () => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    try {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    } catch (e) {}
   };
+
+  const memberInStore = members.find(
+    (m) => (authUser && (m.id === authUser.uid || (m.email && authUser.email && m.email.toLowerCase().trim() === authUser.email.toLowerCase().trim()))) ||
+           (currentMemberId && (m.id === currentMemberId || (m.email && m.email.toLowerCase().trim() === currentMemberId.toLowerCase().trim())))
+  );
 
   const currentMember: TeamMember = authUser
     ? {
         id: authUser.uid,
-        name: authUser.displayName || authUser.email?.split('@')[0] || 'Team Member',
-        role: members.find((m) => m.id === authUser.uid)?.role || 'Founder',
-        email: authUser.email || '',
-        avatarUrl: authUser.photoURL || '/app-icon.png',
-        availability: members.find((m) => m.id === authUser.uid)?.availability || 'Available',
-        weeklyWorkloadHours: 0,
-        assignedTasksCount: 0,
-        completedTasksCount: 0,
-        skills: members.find((m) => m.id === authUser.uid)?.skills || ['Operations'],
-        todayFreeSlots: []
+        name: authUser.displayName || memberInStore?.name || (authUser.email ? authUser.email.split('@')[0] : 'Team Member'),
+        role: memberInStore?.role || 'Founder & Lead',
+        email: authUser.email || memberInStore?.email || '',
+        avatarUrl: authUser.photoURL || memberInStore?.avatarUrl || '/app-icon.png',
+        availability: memberInStore?.availability || 'Available',
+        weeklyWorkloadHours: memberInStore?.weeklyWorkloadHours || 0,
+        assignedTasksCount: memberInStore?.assignedTasksCount || 0,
+        completedTasksCount: memberInStore?.completedTasksCount || 0,
+        skills: memberInStore?.skills || ['Operations'],
+        todayFreeSlots: memberInStore?.todayFreeSlots || [],
+        focusDomain: memberInStore?.focusDomain,
+        university: memberInStore?.university,
+        bio: memberInStore?.bio,
+        themePreference: memberInStore?.themePreference
       }
-    : (currentMemberId ? members.find((m) => m.id === currentMemberId) : null) || {
+    : memberInStore || {
         id: 'guest',
         name: 'Not Signed In',
         role: 'Sign in to access workspace',

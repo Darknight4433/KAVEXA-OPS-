@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Palette,
@@ -91,6 +91,19 @@ export const UserProfileModal: React.FC<{
   const [selectedTheme, setSelectedTheme] = useState(currentMember?.themePreference || 'midnight');
   const [avatarUrl, setAvatarUrl] = useState(currentMember?.avatarUrl || '');
   const [skillsStr, setSkillsStr] = useState(currentMember?.skills?.join(', ') || '');
+
+  useEffect(() => {
+    if (isOpen && currentMember) {
+      setName(currentMember.name === 'Not Signed In' ? '' : currentMember.name);
+      setRole(currentMember.role === 'Sign in to access workspace' ? '' : currentMember.role);
+      setFocusDomain(currentMember.focusDomain || '');
+      setUniversity(currentMember.university || '');
+      setBio(currentMember.bio || '');
+      setSelectedTheme(currentMember.themePreference || 'midnight');
+      setAvatarUrl(currentMember.avatarUrl || '');
+      setSkillsStr(currentMember.skills?.join(', ') || '');
+    }
+  }, [isOpen, currentMember]);
 
   if (!isOpen) return null;
 

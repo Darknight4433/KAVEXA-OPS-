@@ -989,26 +989,30 @@ class WorkspaceFirestoreStore {
   public syncGoogleUser(googleUser: { uid: string; displayName?: string | null; email?: string | null; photoURL?: string | null }) {
     if (!googleUser.email && !googleUser.uid) return;
     const userEmail = (googleUser.email || '').toLowerCase().trim();
+    const userId = (googleUser.uid || '').trim();
+    const avatar = googleUser.photoURL || '/app-icon.png';
+    const name = googleUser.displayName || (userEmail ? userEmail.split('@')[0] : 'Team Member');
     
+    // Check if member already exists by UID OR by email
     const existingIndex = this.members.findIndex(
-      (m) => (m.id && m.id === googleUser.uid) || (userEmail && m.email && m.email.toLowerCase().trim() === userEmail)
+      (m) => (userId && m.id === userId) || (userEmail && m.email && m.email.toLowerCase().trim() === userEmail)
     );
 
     if (existingIndex !== -1) {
-      // Update the authentic user profile in-place
+      // Update the authentic user profile in-place with latest Google credentials
       const existing = this.members[existingIndex];
-      if (googleUser.displayName) existing.name = googleUser.displayName;
+      if (name) existing.name = name;
       if (googleUser.email) existing.email = googleUser.email;
       if (googleUser.photoURL) existing.avatarUrl = googleUser.photoURL;
-      existing.id = googleUser.uid;
+      if (userId) existing.id = userId;
     } else {
       // Create new authentic team member entry
       const newMember: TeamMember = {
-        id: googleUser.uid,
-        name: googleUser.displayName || googleUser.email?.split('@')[0] || 'Team Member',
-        role: this.members.length === 0 ? 'Founder & Lead' : 'Team Member',
+        id: userId || generateId('member'),
+        name: name,
+        role: this.members.length === 0 ? 'Founder & Lead' : 'Co-Founder',
         email: googleUser.email || '',
-        avatarUrl: googleUser.photoURL || '/app-icon.png',
+        avatarUrl: avatar,
         availability: 'Available',
         weeklyWorkloadHours: 0,
         assignedTasksCount: 0,
@@ -1022,15 +1026,25 @@ class WorkspaceFirestoreStore {
       this.members.push(newMember);
     }
 
-    // Deduplicate members cleanly
-    const seen = new Set<string>();
-    this.members = this.members.filter((m) => {
-      const key = (m.id || m.email || m.name).toLowerCase().trim();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    // STRICT DEDUPLICATION: remove guests & ensure only 1 profile per email & per UID
+    const seenEmails = new Set<string>();
+    const seenIds = new Set<string>();
+    const uniqueMembers: TeamMember[] = [];
 
+    for (const m of this.members) {
+      if (!m || m.id === 'guest' || m.name === 'Not Signed In') continue;
+      const emailKey = (m.email || '').toLowerCase().trim();
+      const idKey = (m.id || '').trim();
+
+      if (emailKey && seenEmails.has(emailKey)) continue;
+      if (idKey && seenIds.has(idKey)) continue;
+
+      if (emailKey) seenEmails.add(emailKey);
+      if (idKey) seenIds.add(idKey);
+      uniqueMembers.push(m);
+    }
+
+    this.members = uniqueMembers;
     this.saveState();
   }
 }
