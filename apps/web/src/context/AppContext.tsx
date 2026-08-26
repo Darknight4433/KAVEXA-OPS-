@@ -226,7 +226,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     } catch (e: any) {
       console.error('Google login error:', e);
-      throw e;
+      if (e?.code === 'auth/unauthorized-domain') {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'kavexa-ops.onrender.com';
+        alert(`🔒 Firebase Domain Authorization Required\n\nDomain "${domain}" is not in your Firebase Authorized Domains.\n\nTo enable Google Sign-In:\n1. Open Firebase Console (https://console.firebase.google.com)\n2. Select project "kavexa-ops"\n3. Go to Build > Authentication > Settings > Authorized domains\n4. Click "Add domain" and add: ${domain}`);
+      } else {
+        alert('Authentication Notice: ' + (e?.message || 'Sign in could not complete.'));
+      }
     }
   };
 
