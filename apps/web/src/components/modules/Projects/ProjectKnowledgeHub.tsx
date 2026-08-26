@@ -56,7 +56,8 @@ export const ProjectKnowledgeHub: React.FC<{ project: Project; onBack: () => voi
     setIsNewDiagramModalOpen,
     setIsNewResearchModalOpen,
     setIsNewResourceModalOpen,
-    setIsNewFileModalOpen
+    setIsNewFileModalOpen,
+    deleteProject
   } = useApp();
 
   type HubTab = 'overview' | 'tasks' | 'documentation' | 'diagrams' | 'research' | 'resources' | 'files' | 'ideas' | 'activity';
@@ -168,6 +169,20 @@ export const ProjectKnowledgeHub: React.FC<{ project: Project; onBack: () => voi
             <button onClick={() => setIsNewResourceModalOpen(true)} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
               <LinkIcon size={14} />
               <span>Add Resource</span>
+            </button>
+            <button
+              onClick={() => {
+                if (confirm(`Delete project "${project.name}" and all its tasks, documents, and files?`)) {
+                  deleteProject(project.id);
+                  onBack();
+                }
+              }}
+              className="btn btn-secondary"
+              style={{ fontSize: '0.8rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              title="Delete Project"
+            >
+              <Trash2 size={14} />
+              <span>Delete Project</span>
             </button>
           </div>
         </div>

@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Clock,
   Github,
-  Figma
+  Figma,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { ProjectKnowledgeHub } from './ProjectKnowledgeHub';
@@ -26,7 +27,8 @@ export const ProjectsHub: React.FC = () => {
     tasks,
     selectedProjectId,
     setSelectedProjectId,
-    setIsNewProjectModalOpen
+    setIsNewProjectModalOpen,
+    deleteProject
   } = useApp();
 
   type ViewMode = 'grid' | 'kanban' | 'list' | 'timeline';
@@ -240,18 +242,33 @@ export const ProjectsHub: React.FC = () => {
                           {proj.status}
                         </span>
 
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            padding: '0.15rem 0.45rem',
-                            borderRadius: '4px',
-                            background: proj.health.status === 'Healthy' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                            color: proj.health.status === 'Healthy' ? '#10b981' : '#f59e0b'
-                          }}
-                        >
-                          Health: {proj.health.status}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.45rem',
+                              borderRadius: '4px',
+                              background: proj.health.status === 'Healthy' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                              color: proj.health.status === 'Healthy' ? '#10b981' : '#f59e0b'
+                            }}
+                          >
+                            Health: {proj.health.status}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete project "${proj.name}" and all its tasks?`)) {
+                                deleteProject(proj.id);
+                              }
+                            }}
+                            className="btn-icon"
+                            style={{ width: '22px', height: '22px' }}
+                            title="Delete Project"
+                          >
+                            <Trash2 size={12} style={{ color: '#ef4444' }} />
+                          </button>
+                        </div>
                       </div>
 
                       <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.4rem' }}>
@@ -317,8 +334,23 @@ export const ProjectsHub: React.FC = () => {
                       className="card"
                       style={{ padding: '0.85rem', cursor: 'pointer' }}
                     >
-                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.35rem' }}>
-                        {p.name}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc' }}>
+                          {p.name}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete project "${p.name}"?`)) {
+                              deleteProject(p.id);
+                            }
+                          }}
+                          className="btn-icon"
+                          style={{ width: '20px', height: '20px' }}
+                          title="Delete Project"
+                        >
+                          <Trash2 size={11} style={{ color: '#ef4444' }} />
+                        </button>
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.65rem' }}>
                         {p.description}
@@ -379,9 +411,24 @@ export const ProjectsHub: React.FC = () => {
                   </td>
                   <td style={{ padding: '0.85rem', color: 'var(--text-secondary)' }}>{p.deadline}</td>
                   <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
-                    <button className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
-                      Open Hub →
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', alignItems: 'center' }}>
+                      <button className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
+                        Open Hub →
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete project "${p.name}"?`)) {
+                            deleteProject(p.id);
+                          }
+                        }}
+                        className="btn-icon"
+                        style={{ width: '26px', height: '26px' }}
+                        title="Delete Project"
+                      >
+                        <Trash2 size={13} style={{ color: '#ef4444' }} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -11,14 +11,15 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
-  Activity
+  Activity,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Project } from '@kavexa/shared-types';
 import { ProjectKnowledgeHub } from '../modules/Projects/ProjectKnowledgeHub';
 
 export const MobileProjectsView: React.FC = () => {
-  const { projects, tasks, setIsNewProjectModalOpen } = useApp();
+  const { projects, tasks, setIsNewProjectModalOpen, deleteProject } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Planning' | 'On Hold'>('All');
   const [activeProjectWorkspace, setActiveProjectWorkspace] = useState<Project | null>(null);
@@ -170,19 +171,34 @@ export const MobileProjectsView: React.FC = () => {
                     </div>
                   </div>
 
-                  <span
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '999px',
-                      backgroundColor: p.health?.status === 'Healthy' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                      color: p.health?.status === 'Healthy' ? '#10B981' : '#F59E0B',
-                      border: `1px solid ${p.health?.status === 'Healthy' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
-                    }}
-                  >
-                    {p.health?.status || 'Healthy'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '999px',
+                        backgroundColor: p.health?.status === 'Healthy' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        color: p.health?.status === 'Healthy' ? '#10B981' : '#F59E0B',
+                        border: `1px solid ${p.health?.status === 'Healthy' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
+                      }}
+                    >
+                      {p.health?.status || 'Healthy'}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete project "${p.name}"?`)) {
+                          deleteProject(p.id);
+                        }
+                      }}
+                      className="btn-icon"
+                      style={{ width: '22px', height: '22px', border: 'none', background: 'transparent' }}
+                      title="Delete Project"
+                    >
+                      <Trash2 size={13} style={{ color: '#ef4444' }} />
+                    </button>
+                  </div>
                 </div>
 
                 <p style={{ fontSize: '0.75rem', color: '#A3A3A3', lineHeight: 1.45, marginBottom: '0.85rem' }}>
